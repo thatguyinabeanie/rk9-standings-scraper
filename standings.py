@@ -485,6 +485,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
                             roundsSet = True
                             if(4 and nbPlayers < 8):
                                 standing.roundsDay1 = 3
+                                standing.roundsCut = 0
                             if(nbPlayers == 8):
                                 standing.roundsDay1 = 3
                                 standing.roundsCut = 1
