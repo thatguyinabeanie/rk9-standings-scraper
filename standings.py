@@ -34,6 +34,78 @@ def strip_accents(input_str):
 def Points(elem):
     return elem.points
 
+def initTournament(ident, name, start_date, end_date, rk9_id):
+    return {
+        "id": ident,
+        "name": name,
+        "date": {
+            "start": start_date,
+            "end": end_date
+        },
+        "decklists": 0,
+        "players": {
+            "juniors": 0,
+            "seniors": 0,
+            "masters": 0
+        },
+        "winners": {
+            "juniors": None,
+            "seniors": None,
+            "masters": None
+        },
+        "tournamentStatus": "not-started",
+        "roundNumbers": {
+            "juniors": None,
+            "seniors": None,
+            "masters": None
+        },
+        "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        "rk9link": rk9_id,
+    }
+
+def parseRk9DateRange(input_str):
+    months = {
+        'jan': '01',
+        'feb': '02',
+        'mar': '03',
+        'apr': '04',
+        'may': '05',
+        'jun': '06',
+        'jul': '07',
+        'aug': '08',
+        'sep': '09',
+        'oct': '10',
+        'nov': '11',
+        'dec': '12'
+    }
+    dateFields = input_str.replace('–', ' ').replace('-', ' ').replace(', ', ' ').split(" ")
+    if len(dateFields) > 4:
+        startDate = dateFields[4] + '-' + months[dateFields[0].strip()[:3].lower()] + '-' + f'{int(dateFields[1]):02d}'
+        endDate = dateFields[4] + '-' + months[dateFields[2].strip()[:3].lower()] + '-' + f'{int(dateFields[3]):02d}'
+    else:
+        startDate = dateFields[3] + '-' + months[dateFields[0].strip()[:3].lower()] + '-' + f'{int(dateFields[1]):02d}'
+        endDate = dateFields[3] + '-' + months[dateFields[0].strip()[:3].lower()] + '-' + f'{int(dateFields[2]):02d}'
+    return (startDate, endDate)
+
+def addTournamentToIndex(indexFilename, tourData):
+    indexData = []
+
+    try:
+        with open(indexFilename, 'r') as indexFile:
+            indexData = json.load(indexFile)
+    except OSError:
+        pass
+
+    for (i, tour) in enumerate(indexData):
+        if tour['id'] == tourData['id']:
+            indexData[i] = tourData
+            break
+    else:
+        indexData.append(tourData)
+
+    with open(indexFilename, 'w') as indexFile:
+        json.dump(indexData, indexFile)
+
 def mainWorker(directory, link, getDecklists, getRoster):
     lastPageLoaded = ""
     page = None
@@ -49,6 +121,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
         pageTitle = soup.find('h3', {'class': 'mb-0'}).text
         title = pageTitle.split('\n')[0]
         date =  pageTitle.split('\n')[1]
+        dates = parseRk9DateRange(date)
 
         winners = []
         rounds = []
@@ -61,6 +134,8 @@ def mainWorker(directory, link, getDecklists, getRoster):
         standings.append(Standing(title, directory, 'juniors', 'Juniors', [link], []))
         standings.append(Standing(title, directory, 'seniors', 'Seniors', [link], []))
         standings.append(Standing(title, directory, 'masters', 'Masters', [link], []))
+
+        tourData = initTournament(directory, title, dates[0], dates[1], link)
 
         decklists_players = None
         roster = None
@@ -481,45 +556,22 @@ def mainWorker(directory, link, getDecklists, getRoster):
             if len(countries)>0:
                 countCountries, namesCountries = zip(*sorted(zip(countCountries, namesCountries), reverse=True))
 
-            f = open('tournaments.json', encoding="utf-8")
-            data = json.load(f)
-            f.close()
-
             # Iterating through the json
             # list
-            if(data != None):
-                dataAdded = False
-                for tourn in data:
-                    if(tourn['id'] == standing.tournamentDirectory):
-                        if(len(standing.players) > 0):
-                            tourn['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                            tourn['roundNumbers'][standing.directory.lower()] = iRoundsFromUrl
-                            if "players" not in tourn:
-                                tourn['players'] = {}
-                            tourn['players'][standing.directory.lower()] = len(standing.players)
-                            if(winner != None):
-                                tourn['winners'][standing.directory.lower()] = winner.name
-                            if(winner != None and standing.directory.lower() == 'masters'):
-                                tourn['tournamentStatus'] = "finished"
-                            else:
-                                tourn['tournamentStatus'] = "running"
-                        dataAdded = True
-                if(not dataAdded):
-                    months = {'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'}
-                    dateFields = date.replace('–', ' ').replace('-', ' ').replace(', ', ' ').split(" ")
-                    if len(dateFields) > 4:
-                        startDate = dateFields[4] + '-' + months[dateFields[0].strip()[:3].lower()] + '-' + f'{int(dateFields[1]):02d}'
-                        endDate = dateFields[4] + '-' + months[dateFields[2].strip()[:3].lower()] + '-' + f'{int(dateFields[3]):02d}'
-                    else:
-                        startDate = dateFields[3] + '-' + months[dateFields[0].strip()[:3].lower()] + '-' + f'{int(dateFields[1]):02d}'
-                        endDate = dateFields[3] + '-' + months[dateFields[0].strip()[:3].lower()] + '-' + f'{int(dateFields[2]):02d}'
+            if(len(standing.players) > 0):
+                tourData['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                tourData['roundNumbers'][standing.directory.lower()] = iRoundsFromUrl
+                if "players" not in tourData:
+                    tourData['players'] = {}
+                tourData['players'][standing.directory.lower()] = len(standing.players)
+                if(winner != None):
+                    tourData['winners'][standing.directory.lower()] = winner.name
+                if(winner != None and standing.directory.lower() == 'masters'):
+                    tourData['tournamentStatus'] = "finished"
+                else:
+                    tourData['tournamentStatus'] = "running"
 
-                    newData = {"id": standing.tournamentDirectory, "name": standing.tournamentName, "date": {"start": startDate, "end": endDate}, "decklists": 0, "players": {"juniors": 0, "seniors": 0, "masters": 0}, "winners": {"juniors": None, "seniors": None, "masters": None}, "tournamentStatus": "not-started", "roundNumbers": {"juniors": None, "seniors": None, "masters": None}, "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), "rk9link": standing.urls[0]}
-                    data.append(newData)
-
-            with open("tournaments.json", "w") as outfile:
-                json.dump(data, outfile, indent=2)
-            nbRounds = 0
+            addTournamentToIndex('tournaments.json', tourData)
 
             csvExport = open(standing.directory + standing.tournamentDirectory + ".csv", 'wb')
             for player in standing.players:
