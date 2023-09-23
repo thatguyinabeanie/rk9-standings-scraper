@@ -556,8 +556,6 @@ def mainWorker(directory, link, getDecklists, getRoster):
             if len(countries)>0:
                 countCountries, namesCountries = zip(*sorted(zip(countCountries, namesCountries), reverse=True))
 
-            # Iterating through the json
-            # list
             if(len(standing.players) > 0):
                 tourData['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                 tourData['roundNumbers'][standing.directory.lower()] = iRoundsFromUrl
