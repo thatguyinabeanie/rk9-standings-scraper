@@ -8,6 +8,7 @@ class Standing:
         self.level = ""
         self.roundsDay1 = 999
         self.roundsDay2 = 999
+        self.roundsCut = 999
         self.players = []
         self.playerID = 1
         self.directory = folder

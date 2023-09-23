@@ -372,30 +372,39 @@ def mainWorker(directory, link, getDecklists, getRoster):
                             if(4 <= nbPlayers <= 8):
                                 standing.roundsDay1 = 3
                                 standing.roundsDay2 = 3
+                                standing.roundsCut = 0
                             if(9 <= nbPlayers <= 12):
                                 standing.roundsDay1 = 4
                                 standing.roundsDay2 = 4
+                                standing.roundsCut = 2
                             if(13 <= nbPlayers <= 20):
                                 standing.roundsDay1 = 5
                                 standing.roundsDay2 = 5
+                                standing.roundsCut = 2
                             if(21 <= nbPlayers <= 32):
                                 standing.roundsDay1 = 5
                                 standing.roundsDay2 = 5
+                                standing.roundsCut = 3
                             if(33 <= nbPlayers <= 64):
                                 standing.roundsDay1 = 6
                                 standing.roundsDay2 = 6
+                                standing.roundsCut = 3
                             if(65 <= nbPlayers <= 128):
                                 standing.roundsDay1 = 7
                                 standing.roundsDay2 = 7
+                                standing.roundsCut = 3
                             if(129 <= nbPlayers <= 226):
                                 standing.roundsDay1 = 8
                                 standing.roundsDay2 = 8
+                                standing.roundsCut = 3
                             if(227 <= nbPlayers <= 799):
                                 standing.roundsDay1 = 9
                                 standing.roundsDay2 = 14
+                                standing.roundsCut = 3
                             if(nbPlayers >= 800):
                                 standing.roundsDay1 = 9
                                 standing.roundsDay2 = 15
+                                standing.roundsCut = 3
                     if(standing.type == "VGC1"):
                         if(standing.roundsDay1 == 999):
                             roundsSet = True
@@ -403,24 +412,34 @@ def mainWorker(directory, link, getDecklists, getRoster):
                                 standing.roundsDay1 = 3
                             if(nbPlayers == 8):
                                 standing.roundsDay1 = 3
+                                standing.roundsCut = 1
                             if(9 <= nbPlayers <= 16):
                                 standing.roundsDay1 = 4
+                                standing.roundsCut = 2
                             if(17 <= nbPlayers <= 32):
                                 standing.roundsDay1 = 5
+                                standing.roundsCut = 3
                             if(33 <= nbPlayers <= 64):
                                 standing.roundsDay1 = 6
+                                standing.roundsCut = 3
                             if(65 <= nbPlayers <= 128):
                                 standing.roundsDay1 = 7
+                                standing.roundsCut = 3
                             if(129 <= nbPlayers <= 226):
                                 standing.roundsDay1 = 8
+                                standing.roundsCut = 3
                             if(227 <= nbPlayers <= 256):
                                 standing.roundsDay1 = 8
+                                standing.roundsCut = 4
                             if(257 <= nbPlayers <= 409):
                                 standing.roundsDay1 = 9
+                                standing.roundsCut = 4
                             if(410 <= nbPlayers <= 512):
                                 standing.roundsDay1 = 9
+                                standing.roundsCut = 5
                             if(nbPlayers >= 513):
                                 standing.roundsDay1 = 10
+                                standing.roundsCut = 5
                             standing.roundsDay2 = standing.roundsDay1
                     if(roundsSet == True and iRounds == 0):
                         print("Standing : " + standing.type + " - " + standing.tournamentName + " - in " + standing.tournamentDirectory + "/" + standing.directory + " for " + standing.divisionName + " NbPlayers: "+ str(len(standing.players)) + " -> [" + standing.level + "/" + str(standing.roundsDay1) + "/" + str(standing.roundsDay2) + "]")
@@ -445,7 +464,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
                                 player.decklist_json = decklists_players.players[deck_index].json_decklist
 
 
-                    if(iRounds+1 == standing.roundsDay2+3 and stillPlaying == 0):
+                    if(iRounds+1 == standing.roundsDay2 + standing.roundsCut and stillPlaying == 0):
                         winner = standing.players[0]
 
                     jsonExportTables.write((']}').encode())
