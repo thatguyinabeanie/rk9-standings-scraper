@@ -1,6 +1,6 @@
 #class Standing
 class Standing:
-    def __init__(self, tournamentName, tournamentDirectory, folder, divisionName, urls, dqed, type="TCG"):
+    def __init__(self, tournamentName, tournamentDirectory, folder, divisionName, urls, dqed ):
         self.tournamentName = str(tournamentName)
         self.tournamentDirectory = str(tournamentDirectory)
         self.divisionName = str(divisionName)
@@ -15,8 +15,6 @@ class Standing:
         self.dqed = dqed
         self.hidden = []
         self.currentRound = 0
-        # TCG / VGC1 (VGC regs before 2023OCIC) / VGC2 (VGC ICs/Regs after 2023OCIC)
-        self.type = type
 
     def __repr__(self):
         output = self.tournamentName + " (in " + self.tournamentDirectory + ") " + self.divisionName
