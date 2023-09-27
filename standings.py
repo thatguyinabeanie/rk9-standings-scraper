@@ -105,7 +105,7 @@ def addTournamentToIndex(indexFilename, tourData):
     with open(indexFilename, 'w') as indexFile:
         json.dump(indexData, indexFile)
 
-def mainWorker(directory, link, getDecklists, getRoster):
+def mainWorker(directory, link, getDecklists, getRoster, output_dir):
     lastPageLoaded = ""
     page = None
     soup = None
@@ -192,7 +192,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
                     publishedStandings.append(player.replace('  ', ' '))
 
             publishedStandings = []
-            jsonExportTables = open(f"{standing.directory}_{standing.tournamentDirectory}_tables.json", 'wb')
+            jsonExportTables = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_tables.json", 'wb')
             jsonExportTables.write(('[').encode())
 
             stillPlaying = 0
@@ -469,7 +469,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
                         standing.roundsCut = 3
                 if(roundsSet == True and iRounds == 0):
                     print("Standing : " + standing.tournamentName + " - in " + standing.tournamentDirectory + "/" + standing.directory + " for " + standing.divisionName + " NbPlayers: "+ str(len(standing.players)) + " -> [" + standing.level + "/" + str(standing.roundsDay1) + "/" + str(standing.roundsDay2) + "]")
-                    jsonPlayers = open(f"{standing.directory}_{standing.tournamentDirectory}_players.json", 'wb')
+                    jsonPlayers = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_players.json", 'wb')
                     jsonPlayers.write(('{"players":[').encode())
                     for player in standing.players:
                         jsonPlayers.write(('{"id":"'+str(player.id)+'","name":"'+str(player.name)+'"},').encode())
@@ -518,9 +518,9 @@ def mainWorker(directory, link, getDecklists, getRoster):
             else:
                 tourData['tournamentStatus'] = "running"
 
-        addTournamentToIndex('tournaments.json', tourData)
+        addTournamentToIndex(f"{output_dir}/tournaments.json", tourData)
 
-        csvExport = open(f"{standing.directory}_{standing.tournamentDirectory}_.csv", 'wb')
+        csvExport = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_.csv", 'wb')
         for player in standing.players:
             if(player):
                 player.ToCSV(csvExport)
@@ -539,7 +539,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
                     player.decklist_ptcgo = decklists_players.players[deck_index].ptcgo_decklist
                     player.decklist_json = decklists_players.players[deck_index].json_decklist
 
-        jsonExport = open(f"{standing.directory}_{standing.tournamentDirectory}_.json", 'wb')
+        jsonExport = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_.json", 'wb')
         jsonExport.write(('[').encode())
         first = True
         for player in standing.players:
@@ -563,6 +563,7 @@ if __name__ == "__main__":
     parser.add_argument("--id")
     parser.add_argument("--decklists", action="store_true", help="read decklists from /roster/ page")
     parser.add_argument("--roster", action="store_true", help="read roster from /roster/ page")
+    parser.add_argument("--output-dir", help="output directory")
 
     args = parser.parse_args()
 
@@ -572,6 +573,6 @@ if __name__ == "__main__":
     """
     starttime = time.time()
     while True:
-        mainWorker(args.id, args.url, args.decklists, args.roster)
+        mainWorker(args.id, args.url, args.decklists, args.roster, args.output_dir)
         time.sleep(240.0 - ((time.time() - starttime) % 120.0))
 
