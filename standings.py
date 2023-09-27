@@ -571,8 +571,5 @@ if __name__ == "__main__":
     id = '0000090'
     url = 'BA189xznzDvlCdfoQlBC'
     """
-    starttime = time.time()
-    while True:
-        mainWorker(args.id, args.url, args.decklists, args.roster, args.output_dir)
-        time.sleep(240.0 - ((time.time() - starttime) % 120.0))
+    mainWorker(args.id, args.url, args.decklists, args.roster, args.output_dir)
 
