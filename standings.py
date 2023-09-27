@@ -114,7 +114,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
     try:
         url = 'https://rk9.gg/tournament/' + link
         page = requests.get(url)
-        soup = BeautifulSoup(page.content, "html.parser")
+        soup = BeautifulSoup(page.content, "lxml")
 
         pageTitle = soup.find('h3', {'class': 'mb-0'}).text
         title = pageTitle.split('\n')[0]
@@ -159,7 +159,7 @@ def mainWorker(directory, link, getDecklists, getRoster):
                     lastPageLoaded = url
                     page = requests.get(url)
                     #page content to BeautifulSoup
-                    soup = BeautifulSoup(page.content, "html.parser")
+                    soup = BeautifulSoup(page.content, "lxml")
 
                 #finding out how many rounds on the page
                 iRoundsFromUrl = 0
@@ -171,7 +171,6 @@ def mainWorker(directory, link, getDecklists, getRoster):
                                 iRoundsFromUrl = int(sp[len(sp)-1])
                                 standing.level = str(aria['aria-controls'])
 
-                #iRoundsFromUrl = 13
                 roundsSet = False
                 standing.currentRound = iRoundsFromUrl
 
@@ -218,66 +217,59 @@ def mainWorker(directory, link, getDecklists, getRoster):
                         p2late = 0
                         scores1 = []
                         scores2 = []
-                        table = "0"
-                        table1 = match_data.find('div', attrs={'class':'col-2'})
-                        if table1 != None:
-                            table2 = table1.find('span', attrs={'class':'tablenumber'})
-                            if table2 != None:
-                                table = table2.text
-                        for player_data in match_data.find_all('div', attrs={'class':'player1'}):
-                            textData = player_data.text.split("\n")
-
-                            name = player_data.find_all('span', attrs={'class':'name'})
-                            if(len(name) > 0):
-                                score = textData[3]
-                                score = score.strip()
-                                score = score.replace('(', '')
-                                score = score.replace(')', '')
-                                scores1 = re.split('-', score)
-                                player1 = re.sub('\s+',' ', name[0].text)
-                                if(str(player_data).find(" dropped") != -1):
-                                    p1dropped = True
-                                if(str(player_data).find(" winner") != -1):
-                                    p1status = 2
-                                if(str(player_data).find(" loser") != -1):
-                                    p1status = 0
-                                if(str(player_data).find(" tie") != -1):
-                                    p1status = 1
-                                if(p1status == -1 and not p1dropped):
-                                    if(iRounds+1 < iRoundsFromUrl):
-                                        p1status = 0
-                                        if(iRounds == 0):
-                                            p1late = -1
-
-
-                        for player_data in match_data.find_all('div', attrs={'class':'player2'}):
-                            textData = player_data.text.split("\n")
-                            name = player_data.find_all('span', attrs={'class':'name'})
-                            if(len(name) > 0):
-                                score = textData[3]
-                                score = score.strip()
-                                score = score.replace('(', '')
-                                score = score.replace(')', '')
-                                scores2 = re.split('-', score)
-                                player2 = re.sub('\s+',' ', name[0].text)
-                                if(str(player_data).find(" dropped") != -1):
-                                    p2dropped = True
-                                if(str(player_data).find(" winner") != -1):
-                                    p2status = 2
-                                if(str(player_data).find(" loser") != -1):
-                                    p2status = 0
-                                if(str(player_data).find(" tie") != -1):
-                                    p2status = 1
-                                if(p2status == -1 and not p2dropped):
-                                    if(iRounds+1 < iRoundsFromUrl):
-                                        p2status = 0
-                                        if(iRounds == 0):
-                                            p2late = -1
-
                         p1 = None
                         p2 = None
                         addP1 = True
                         addP2 = True
+                        table = "0"
+
+                        tableData = match_data.find('div', attrs={'class':'col-2'})
+                        if tableData:
+                            tableData = tableData.find('span', attrs={'class':'tablenumber'})
+                            if tableData:
+                                table = tableData.text
+
+                        player_data = match_data.find('div', attrs={'class': 'player1'})
+                        text_data = player_data.text.split('\n')
+                        name = player_data.find('span', attrs={'class': 'name'})
+                        if name:
+                            score = text_data[3].strip().replace('(', '').replace(')', '')
+                            scores1 = re.split('-', score)
+                            player1 = re.sub('\s+',' ', name.text)
+                            if(str(player_data).find(" dropped") != -1):
+                                p1dropped = True
+                            if(str(player_data).find(" winner") != -1):
+                                p1status = 2
+                            if(str(player_data).find(" loser") != -1):
+                                p1status = 0
+                            if(str(player_data).find(" tie") != -1):
+                                p1status = 1
+                            if(p1status == -1 and not p1dropped):
+                                if(iRounds + 1 < iRoundsFromUrl):
+                                    p1status = 0
+                                    if(iRounds == 0):
+                                        p1late = -1
+
+                        player_data = match_data.find('div', attrs={'class': 'player2'})
+                        text_data = player_data.text.split('\n')
+                        name = player_data.find('span', attrs={'class': 'name'})
+                        if name:
+                            score = text_data[3].strip().replace('(', '').replace(')', '')
+                            scores2 = re.split('-', score)
+                            player2 = re.sub('\s+',' ', name.text)
+                            if(str(player_data).find(" dropped") != -1):
+                                p2dropped = True
+                            if(str(player_data).find(" winner") != -1):
+                                p2status = 2
+                            if(str(player_data).find(" loser") != -1):
+                                p2status = 0
+                            if(str(player_data).find(" tie") != -1):
+                                p2status = 1
+                            if(p2status == -1 and not p2dropped):
+                                if(iRounds + 1 < iRoundsFromUrl):
+                                    p2status = 0
+                                    if(iRounds == 0):
+                                        p2late = -1
 
                         if(len(player1) > 0):
                             for player in filter(lambda y: y.name == player1, standing.players):
@@ -586,7 +578,8 @@ if __name__ == "__main__":
     starttime = time.time()
     while True:
         try:
-            mainWorker(args.id, args.url, args.roster, args.decklists)
+            mainWorker(args.id, args.url, args.decklists, args.roster)
         except Exception as e:
             print(e)
         time.sleep(240.0 - ((time.time() - starttime) % 120.0))
+
