@@ -1,3 +1,5 @@
+import json
+
 #class Match : VS a player, with a status [W/L/T -> 2/0/1] and a table number
 class Match:
     def __init__(self, player, status, table):
@@ -204,12 +206,6 @@ class Player:
         output += "\n\n"
         return output
 
-    #ToText
-    def ToTxt(self, rank):
-        output = str(rank) + " - " + self.name + " " + str(self.wins) + "-" + str(self.losses) + "-" + str(self.ties) + " -- " + str(self.points) + "pts " + str('%.2f' % (self.OppWinPercentage*100)) + "% " + str('%.2f' % (self.OppOppWinPercentage*100)) + "%"
-        output += "\n"
-        return output
-
     #ToCSV
     def ToCSV(self, file):
         round = 1
@@ -229,78 +225,29 @@ class Player:
             file.write((str(points) + '\t').encode())
             file.write((str(round) + '\n').encode())
             round += 1
+
     #toJson
-    def ToJSON(self, file):
-        file.write(('{').encode())
-        file.write(('"name":"' + self.name.replace('"', '\\"') + '",').encode())
-        file.write(('"placing":' + str(self.topPlacement) + ',').encode())
-        file.write(('"record":{"wins":' + str(self.wins) + ',"losses":' + str(self.losses) + ',"ties":' + str(self.ties) + '},').encode())
-        file.write(('"resistances":{"self":' + str(self.WinPercentage) + ',"opp":' + str(self.OppWinPercentage) + ',"oppopp":' + str(self.OppOppWinPercentage) + '},').encode())
-        if(len(self.decklist_json) > 0):
-            file.write(('"decklist":'+ self.decklist_json +',').encode())
-        else:
-            file.write(('"decklist":"",').encode())
-        file.write(('"drop":'+ str(self.dropRound) + ',').encode())
-
-        file.write(('"rounds":{').encode())
-        round = 1
-        for match in self.matches:
-            name = "none"
-            if(match.player != None):
-                name = match.player.name
-            file.write(('"' + str(round) + '":{"name":"'+ name.replace('"', '\\"') + '","result":').encode())
-            if(match.status == 0):
-                file.write(('"L"').encode())
-            if(match.status == 1):
-                file.write(('"T"').encode())
-            if(match.status == 2):
-                file.write(('"W"').encode())
-            if(match.status == -1):
-                file.write(('null').encode())
-            file.write((',"table":').encode())
-            file.write((str(match.table)).encode())
-            file.write(('}').encode())
-            if(round < len(self.matches)):
-                file.write((',').encode())
-            round += 1
-        file.write(('}').encode())
-
-        file.write(('}').encode())
-
-    #toHTML
-    def ToHtml(self):
-        output = ""
-        round = 0
-        for match in self.matches:
-            if(match.player != None):
-                output += '<p'
-                cssColor = ""
-                if(match.status == -1):
-                    cssColor = ' class="r"'
-                if(match.status == 0):
-                    cssColor = ' class="l"'
-                if(match.status == 1):
-                    cssColor = ' class="t"'
-                if(match.status == 2):
-                    cssColor = ' class="w"'
-                output += cssColor + '>R' + str(round+1) + ' ['+str(match.table)+'] Vs. <a href="#' + str(match.player.id) +'" '+ cssColor+'>' + match.player.name + "</a> "
-                if(not(match.player.name == 'BYE' or match.player.name == 'LATE')):
-                    output += str(match.player.wins) + "-" + str(match.player.losses) + "-" + str(match.player.ties)
-
-                if(match.status == -1 and match.player.dropRound == -1):
-                    output += " Currently Playing"
-                if(match.status == 0):
-                    output += " L"
-                if(match.status == 1):
-                    output += " T"
-                if(match.status == 2):
-                    output += " W"
-                if(match.player.dqed):
-                    output += "<i> dqed</i>"
-                else:
-                    if(match.player.dropRound > 0):
-                        output += "<i> dropped</i>"
-                output += "</p>"
-            round = round+1
-
-        return output
+    def to_json(self):
+        return {
+            'name': self.name,
+            'placing': self.topPlacement,
+            'record': {
+                'wins': self.wins,
+                'losses': self.losses,
+                'ties': self.ties
+            },
+            'resistances': {
+                'self': self.WinPercentage,
+                'opp': self.OppWinPercentage,
+                'oppopp': self.OppOppWinPercentage
+            },
+            'decklist': json.loads(self.decklist_json) if len(self.decklist_json) > 0 else '',
+            'drop': self.dropRound,
+            'rounds': {
+                round: {
+                    'name': self.matches[round - 1].player.name,
+                    'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[self.matches[round - 1].status],
+                    'table': int(self.matches[round - 1].table)
+                } for round in range(1, len(self.matches) + 1)
+            }
+        }

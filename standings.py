@@ -192,16 +192,11 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                     publishedStandings.append(player.replace('  ', ' '))
 
             publishedStandings = []
-            jsonExportTables = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_tables.json", 'wb')
-            jsonExportTables.write(('[').encode())
 
             stillPlaying = 0
 
             for iRounds in range(iRoundsFromUrl):
-                firstTableData = True
-                if(iRounds > 0):
-                    jsonExportTables.write((',').encode())
-                jsonExportTables.write(('{"tables":[').encode())
+                tables = []
                 strToFind = standing.level + "R" + str(iRounds+1)
                 round_data = soup.find('div', attrs={'id':strToFind})
                 stillPlaying = 0
@@ -346,43 +341,31 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                             standing.players.append(p2)
 
                     if(p1 != None and p2 != None):
-                        if(not firstTableData):
-                            jsonExportTables.write((',').encode())
-                        jsonExportTables.write(('{').encode())
-                        jsonExportTables.write(('"table":'+str(table)+",").encode())
-                        jsonExportTables.write(('"players":[{"name":').encode())
-                        if(p1 != None):
-                            jsonExportTables.write(('"'+p1.name.replace('"', '\\"')+'"').encode())
-                        else:
-                            jsonExportTables.write(('null').encode())
-                        jsonExportTables.write((',"result":').encode())
-                        if(p1status == 0):
-                            jsonExportTables.write(('"L"').encode())
-                        if(p1status == 1):
-                            jsonExportTables.write(('"T"').encode())
-                        if(p1status == 2):
-                            jsonExportTables.write(('"W"').encode())
-                        if(p1status == -1):
-                            jsonExportTables.write(('null').encode())
-                        jsonExportTables.write((',"record":{"wins":' + str(p1.wins) + ',"losses":' + str(p1.losses) + ',"ties":' + str(p1.ties) + '}').encode())
-                        jsonExportTables.write(('},{"name":').encode())
-                        if(p2 != None):
-                            jsonExportTables.write(('"'+p2.name.replace('"', '\\"')+'"').encode())
-                        else:
-                            jsonExportTables.write(('null').encode())
-                        jsonExportTables.write((',"result":').encode())
-                        if(p2status == 0):
-                            jsonExportTables.write(('"L"').encode())
-                        if(p2status == 1):
-                            jsonExportTables.write(('"T"').encode())
-                        if(p2status == 2):
-                            jsonExportTables.write(('"W"').encode())
-                        if(p2status == -1):
-                            jsonExportTables.write(('null').encode())
-                        jsonExportTables.write((',"record":{"wins":' + str(p2.wins) + ',"losses":' + str(p2.losses) + ',"ties":' + str(p2.ties) + '}}').encode())
-                        jsonExportTables.write((']').encode())
-                        jsonExportTables.write(('}').encode())
-                        firstTableData = False
+                        tables.append({
+                            'table': int(table),
+                            'players': [
+                                {
+                                    'name': p1.name,
+                                    'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[p1status],
+                                    'record': {
+                                        'wins': p1.wins,
+                                        'losses': p1.losses,
+                                        'ties': p1.ties
+                                    }
+                                },
+                                {
+                                    'name': p2.name,
+                                    'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[p2status],
+                                    'record': {
+                                        'wins': p2.wins,
+                                        'losses': p2.losses,
+                                        'ties': p2.ties
+                                    }
+                                }
+                            ]
+                        })
+
+                standing.tables.append({'tables': tables})
 
                 if(len(standing.hidden)>0):
                     for player in standing.players:
@@ -469,12 +452,10 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                         standing.roundsCut = 3
                 if(roundsSet == True and iRounds == 0):
                     print("Standing : " + standing.tournamentName + " - in " + standing.tournamentDirectory + "/" + standing.directory + " for " + standing.divisionName + " NbPlayers: "+ str(len(standing.players)) + " -> [" + standing.level + "/" + str(standing.roundsDay1) + "/" + str(standing.roundsDay2) + "]")
-                    jsonPlayers = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_players.json", 'wb')
-                    jsonPlayers.write(('{"players":[').encode())
-                    for player in standing.players:
-                        jsonPlayers.write(('{"id":"'+str(player.id)+'","name":"'+str(player.name)+'"},').encode())
-                    jsonPlayers.write((']}').encode())
-                    jsonPlayers.close()
+                    with open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_players.json", 'w') as jsonPlayers:
+                        json.dump({
+                            'players': [{'id': str(player.id), 'name': player.name} for player in standing.players]
+                        }, jsonPlayers, separators=(',', ':'), ensure_ascii=False)
 
                 if(decklists_players):
                     for player in standing.players:
@@ -489,11 +470,11 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                             player.decklist_ptcgo = decklists_players.players[deck_index].ptcgo_decklist
                             player.decklist_json = decklists_players.players[deck_index].json_decklist
 
-
                 if(iRounds+1 == standing.roundsDay2 + standing.roundsCut and stillPlaying == 0):
                     winner = standing.players[0]
 
-                jsonExportTables.write((']}').encode())
+            with open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_tables.json", 'w') as tables_file:
+                json.dump(standing.tables, tables_file, separators=(',', ':'), ensure_ascii=False)
 
         countries = []
         for player in standing.players:
@@ -520,11 +501,10 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
 
         addTournamentToIndex(f"{output_dir}/tournaments.json", tourData)
 
-        csvExport = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_.csv", 'wb')
-        for player in standing.players:
-            if(player):
-                player.ToCSV(csvExport)
-        csvExport.close()
+        with open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}.csv", 'wb') as csvExport:
+            for player in standing.players:
+                if(player):
+                    player.ToCSV(csvExport)
 
         if(decklists_players):
             for player in standing.players:
@@ -539,20 +519,8 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                     player.decklist_ptcgo = decklists_players.players[deck_index].ptcgo_decklist
                     player.decklist_json = decklists_players.players[deck_index].json_decklist
 
-        jsonExport = open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_.json", 'wb')
-        jsonExport.write(('[').encode())
-        first = True
-        for player in standing.players:
-            if(player):
-                if(not first):
-                    jsonExport.write((',').encode())
-                player.ToJSON(jsonExport)
-                first = False
-        jsonExport.write((']').encode())
-        jsonExport.close()
-
-        jsonExportTables.write((']').encode())
-        jsonExportTables.close()
+        with open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}.json", 'w') as json_export:
+            json.dump(standing.players, json_export, default=lambda o: o.to_json(), separators=(',', ':'), ensure_ascii=False)
 
     now = datetime.now() #current date and time
     print('Ending at ' + now.strftime("%Y/%m/%d - %H:%M:%S") + " with no issues")

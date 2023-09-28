@@ -15,6 +15,7 @@ class Standing:
         self.dqed = dqed
         self.hidden = []
         self.currentRound = 0
+        self.tables = []
 
     def __repr__(self):
         output = self.tournamentName + " (in " + self.tournamentDirectory + ") " + self.divisionName
