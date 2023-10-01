@@ -1,20 +1,20 @@
 import time
-import requests
 from datetime import datetime
-from bs4 import BeautifulSoup
-import unicodedata
 import sys
 import json
 import re
 import argparse
+import math
+from collections import Counter
 
-#my imports
+from bs4 import BeautifulSoup
+import unicodedata
+import requests
+
 from standing import Standing
 from player import Player
 from decklists import Decklists, PlayersData
 
-import math
-from collections import Counter
 
 def RemoveCountry(name):
     start = name.find(' [')
