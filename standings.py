@@ -191,8 +191,6 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                         player += data[i]
                     publishedStandings.append(player.replace('  ', ' '))
 
-            publishedStandings = []
-
             stillPlaying = 0
 
             for iRounds in range(iRoundsFromUrl):
