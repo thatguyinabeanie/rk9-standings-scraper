@@ -173,6 +173,8 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
             roundsSet = False
             standing.currentRound = iRoundsFromUrl
 
+            roundsDATA = soup.find_all("div", id=lambda value: value and value.startswith(standing.level + "R"))
+
             rounds.append(iRoundsFromUrl)
 
             #scrapping standings if available, to compare results later
@@ -194,13 +196,20 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
             stillPlaying = 0
 
             for iRounds in range(iRoundsFromUrl):
+                playersDictionnary = {}
+                for player in standing.players:
+                    counter = 0
+                    while f"{player.name}#{counter}" in playersDictionnary:
+                        counter += 1
+                    playersDictionnary[f"{player.name}#{counter}"] = player
+
                 tables = []
-                strToFind = standing.level + "R" + str(iRounds+1)
-                round_data = soup.find('div', attrs={'id':strToFind})
+                round_data = roundsDATA[iRounds]
+                matches = round_data.find_all('div', attrs={'class':'match'})
                 stillPlaying = 0
-                for match_data in round_data.find_all('div', attrs={'class':'match'}):
-                    player1 = ""
-                    player2 = ""
+                for match_data in matches:
+                    player1Name = ""
+                    player2Name = ""
                     p1status = -1
                     p2status = -1
                     p1dropped = False
@@ -226,16 +235,17 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                     name = player_data.find('span', attrs={'class': 'name'})
                     if name:
                         score = text_data[3].strip().replace('(', '').replace(')', '')
-                        scores1 = re.split('-', score)
-                        player1 = re.sub('\s+',' ', name.text)
-                        if(str(player_data).find(" dropped") != -1):
-                            p1dropped = True
-                        if(str(player_data).find(" winner") != -1):
+                        scores1 = list(map(int, re.split('-', score)))
+                        player1Name = re.sub('\s+',' ', name.text)
+                        pdataText = str(player_data)
+                        if(pdataText.find(" winner") != -1):
                             p1status = 2
-                        if(str(player_data).find(" loser") != -1):
+                        elif(pdataText.find(" loser") != -1):
                             p1status = 0
-                        if(str(player_data).find(" tie") != -1):
+                        elif(pdataText.find(" tie") != -1):
                             p1status = 1
+                        if(pdataText.find(" dropped") != -1):
+                            p1dropped = True
                         if(p1status == -1 and not p1dropped):
                             if(iRounds + 1 < iRoundsFromUrl):
                                 p1status = 0
@@ -247,96 +257,105 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                     name = player_data.find('span', attrs={'class': 'name'})
                     if name:
                         score = text_data[3].strip().replace('(', '').replace(')', '')
-                        scores2 = re.split('-', score)
-                        player2 = re.sub('\s+',' ', name.text)
-                        if(str(player_data).find(" dropped") != -1):
-                            p2dropped = True
-                        if(str(player_data).find(" winner") != -1):
+                        scores2 = list(map(int, re.split('-', score)))
+                        player2Name = re.sub('\s+',' ', name.text)
+                        pdataText = str(player_data)
+                        if(pdataText.find(" winner") != -1):
                             p2status = 2
-                        if(str(player_data).find(" loser") != -1):
+                        elif(pdataText.find(" loser") != -1):
                             p2status = 0
-                        if(str(player_data).find(" tie") != -1):
+                        elif(pdataText.find(" tie") != -1):
                             p2status = 1
+                        if(pdataText.find(" dropped") != -1):
+                            p2dropped = True
                         if(p2status == -1 and not p2dropped):
                             if(iRounds + 1 < iRoundsFromUrl):
                                 p2status = 0
                                 if(iRounds == 0):
                                     p2late = -1
 
-                    if(len(player1) > 0):
-                        for player in filter(lambda y: y.name == player1, standing.players):
-                            if(p1status == -1 and (player.wins == int(scores1[0]) and player.losses == int(scores1[1]) and player.ties == int(scores1[2]))):
+                    result = []
+                    counter = 0
+                    while player1Name+'#'+str(counter) in playersDictionnary:
+                        result.append(playersDictionnary[player1Name+'#'+str(counter)])
+                        counter += 1
+
+                    if len(result) > 0:
+                        for player in result:
+                            if(p1status == -1 and (player.wins == scores1[0] and player.losses == scores1[1] and player.ties == scores1[2])):
                                 p1 = player
-                                addP1 = False
-                            if(p1status == 0 and (player.wins == int(scores1[0]) and player.losses + 1 == int(scores1[1]) and player.ties == int(scores1[2]))):
-                                p1 = player
-                                addP1 = False
-                            if(p1status == 1 and (player.wins == int(scores1[0]) and player.losses == int(scores1[1]) and player.ties + 1 == int(scores1[2]))):
-                                p1 = player
-                                addP1 = False
-                            if(p1status == 2 and (player.wins + 1 == int(scores1[0]) and player.losses == int(scores1[1]) and player.ties == int(scores1[2]))):
-                                p1 = player
-                                addP1 = False
+                                stillPlaying += 1
+                            else:
+                                if(p1status == 0 and (player.wins == scores1[0] and player.losses + 1 == scores1[1] and player.ties == scores1[2])):
+                                    p1 = player
+                                else:
+                                    if(p1status == 1 and (player.wins == scores1[0] and player.losses == scores1[1] and player.ties + 1 == scores1[2])):
+                                        p1 = player
+                                    else:
+                                        if(p1status == 2 and (player.wins + 1 == scores1[0] and player.losses == scores1[1] and player.ties == scores1[2])):
+                                            p1 = player
                             if(p1dropped):
                                 if(p1 == None):
-                                    if(player.wins == int(scores1[0]) and player.losses == int(scores1[1]) and player.ties == int(scores1[2])):
+                                    if(player.wins == scores1[0] and player.losses == scores1[1] and player.ties == scores1[2]):
                                         p1 = player
-                                        player.dropRound = iRounds+1
-                                        addP1 = False
+                                else:
+                                    p1.dropRound = iRounds+1
+                            if p1:
+                                break
 
-                        for player in filter(lambda y: y.name == player2, standing.players):
-                            if(p2status == -1 and (player.wins == int(scores2[0]) and player.losses == int(scores2[1]) and player.ties == int(scores2[2]))):
+                    result = []
+                    counter = 0
+                    while player2Name+'#'+str(counter) in playersDictionnary:
+                        result.append(playersDictionnary[player2Name+'#'+str(counter)])
+                        counter += 1
+
+                    if len(result) > 0:
+                        for player in result:
+                            if(p2status == -1 and (player.wins == scores2[0] and player.losses == scores2[1] and player.ties == scores2[2])):
                                 p2 = player
-                                addP2 = False
-                            if(p2status == 0 and (player.wins == int(scores2[0]) and player.losses + 1 == int(scores2[1]) and player.ties == int(scores2[2]))):
-                                p2 = player
-                                addP2 = False
-                            if(p2status == 1 and (player.wins == int(scores2[0]) and player.losses == int(scores2[1]) and player.ties + 1 == int(scores2[2]))):
-                                p2 = player
-                                addP2 = False
-                            if(p2status == 2 and (player.wins + 1 == int(scores2[0]) and player.losses == int(scores2[1]) and player.ties == int(scores2[2]))):
-                                p2 = player
-                                addP2 = False
+                                stillPlaying += 1
+                            else:
+                                if(p2status == 0 and (player.wins == scores2[0] and player.losses + 1 == scores2[1] and player.ties == scores2[2])):
+                                    p2 = player
+                                else:
+                                    if(p2status == 1 and (player.wins == scores2[0] and player.losses == scores2[1] and player.ties + 1 == scores2[2])):
+                                        p2 = player
+                                    else:
+                                        if(p2status == 2 and (player.wins + 1 == scores2[0] and player.losses == scores2[1] and player.ties == scores2[2])):
+                                            p2 = player
                             if(p2dropped):
                                 if(p2 == None):
-                                    if(player.wins == int(scores2[0]) and player.losses == int(scores2[1]) and player.ties == int(scores2[2])):
+                                    if(player.wins == scores2[0] and player.losses == scores2[1] and player.ties == scores2[2]):
                                         p2 = player
-                                        player.dropRound = iRounds+1
-                                        addP2 = False
+                                else:
+                                    p2.dropRound = iRounds+1
+                            if p2:
+                                break
 
                     if(p1 == None):
-                        if(len(player1) > 0):
+                        if(len(player1Name) > 0):
                             standing.playerID = standing.playerID + 1
-                            p1 = Player(player1, standing.divisionName, standing.playerID, p1late)
+                            p1 = Player(player1Name, standing.divisionName, standing.playerID, p1late)
                             if(p1.country == "" and roster != None):
                                 p1.country = roster.GetCountry(p1)
                             if(p1.name in standing.dqed or (len(publishedStandings) > 0 and p1.name not in publishedStandings)):
                                 p1.dqed = True
+                            standing.players.append(p1)
+
                     if(p2 == None):
-                        if(len(player2) > 0):
+                        if(len(player2Name) > 0):
                             standing.playerID = standing.playerID + 1
-                            p2 = Player(player2, standing.divisionName, standing.playerID, p2late)
+                            p2 = Player(player2Name, standing.divisionName, standing.playerID, p2late)
                             if(p2.country == "" and roster != None):
                                 p2.country = roster.GetCountry(p2)
                             if(p2.name in standing.dqed or (len(publishedStandings) > 0 and p2.name not in publishedStandings)):
                                 p2.dqed = True
-                    if(p1 != None):
-                        if(p2 == None):
-                            p1.addMatch(None, p1status, p1dropped, iRounds+1 > standing.roundsDay1, iRounds+1 > standing.roundsDay2, table)
-                        else:
-                            p1.addMatch(p2, p1status, p1dropped, iRounds+1 > standing.roundsDay1, iRounds+1 > standing.roundsDay2, table)
-                        if(addP1 == True):
-                            standing.players.append(p1)
-                        if p1status == -1 and not p1.dropRound>-1:
-                            stillPlaying += 1
-
-                    if(p2 != None):
-                        if(p1 == None):
-                            p2.addMatch(None, p2status, p2dropped, iRounds+1 > standing.roundsDay1, iRounds+1 > standing.roundsDay2, table)
-                        else:
-                            p2.addMatch(p1, p2status, p2dropped, iRounds+1 > standing.roundsDay1, iRounds+1 > standing.roundsDay2, table)
-                        if(addP2 == True):
                             standing.players.append(p2)
+
+                    if p1:
+                        p1.addMatch(p2, p1status, p1dropped, iRounds+1 > standing.roundsDay1, iRounds+1 > standing.roundsDay2, table)
+                    if p2:
+                        p2.addMatch(p1, p2status, p2dropped, iRounds+1 > standing.roundsDay1, iRounds+1 > standing.roundsDay2, table)
 
                     if(p1 != None and p2 != None):
                         tables.append({
@@ -448,6 +467,7 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
                         standing.roundsDay1 = 9
                         standing.roundsDay2 = 15
                         standing.roundsCut = 3
+
                 if(roundsSet == True and iRounds == 0):
                     print("Standing : " + standing.tournamentName + " - in " + standing.tournamentDirectory + "/" + standing.directory + " for " + standing.divisionName + " NbPlayers: "+ str(len(standing.players)) + " -> [" + standing.level + "/" + str(standing.roundsDay1) + "/" + str(standing.roundsDay2) + "]")
                     with open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_players.json", 'w') as jsonPlayers:
@@ -519,6 +539,12 @@ def mainWorker(directory, link, getDecklists, getRoster, output_dir):
 
         with open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}.json", 'w') as json_export:
             json.dump(standing.players, json_export, default=lambda o: o.to_json(), separators=(',', ':'), ensure_ascii=False)
+
+        with open(f"{output_dir}/{standing.directory}_{standing.tournamentDirectory}_discrepancy.txt", 'w') as discrepancy_report:
+            if len(publishedStandings) > 0:
+                for player in standing.players:
+                    if player and player.topPlacement - 1 < len(publishedStandings) and player.name != publishedStandings[player.topPlacement - 1]:
+                        discrepancy_report.write(f"{player.topPlacement} RK9: {publishedStandings[player.topPlacement - 1]} --- {player.name}\n")
 
     now = datetime.now() #current date and time
     print('Ending at ' + now.strftime("%Y/%m/%d - %H:%M:%S") + " with no issues")
