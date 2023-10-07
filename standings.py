@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import re
 import argparse
+import os
 
 from bs4 import BeautifulSoup
 import unicodedata
@@ -131,6 +132,8 @@ def main_worker(directory, link, output_dir):
 
     for standing in standings:
         print(f'Standing : {standing.tournament_name} - in {standing.tournament_directory}/{standing.directory} for {standing.division_name} [{standing.level}/{standing.rounds_day1}/{standing.rounds_day2}]')
+
+        os.makedirs(f'{output_dir}/{standing.tournament_directory}/{standing.directory}', exist_ok=True)
 
         winner = None
         # requesting RK9 pairings webpage
@@ -471,7 +474,7 @@ def main_worker(directory, link, output_dir):
 
             if are_rounds_set is True and iRounds == 0:
                 print(f'Standing : {standing.tournament_name} - in {standing.tournament_directory}/{standing.directory} for {standing.division_name} NbPlayers: {len(standing.players)} -> [{standing.level}/{standing.rounds_day1}/{standing.rounds_day2}]')
-                with open(f"{output_dir}/{standing.directory}_{standing.tournament_directory}_players.json",
+                with open(f"{output_dir}/{standing.tournament_directory}/{standing.directory}/players.json",
                           'w') as jsonPlayers:
                     json.dump({
                         'players': [{'id': str(player.id), 'name': player.name} for player in standing.players]
@@ -480,7 +483,7 @@ def main_worker(directory, link, output_dir):
             if iRounds + 1 == standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
                 winner = standing.players[0]
 
-        with open(f"{output_dir}/{standing.directory}_{standing.tournament_directory}_tables.json",
+        with open(f"{output_dir}/{standing.tournament_directory}/{standing.directory}/tables.json",
                   'w') as tables_file:
             json.dump(standing.tables, tables_file, separators=(',', ':'), ensure_ascii=False)
 
@@ -497,16 +500,16 @@ def main_worker(directory, link, output_dir):
 
         add_tournament_to_index(f"{output_dir}/tournaments.json", tour_data)
 
-        with open(f"{output_dir}/{standing.directory}_{standing.tournament_directory}.csv", 'wb') as csvExport:
+        with open(f"{output_dir}/{standing.tournament_directory}/{standing.directory}/tables.csv", 'wb') as csvExport:
             for player in standing.players:
                 if player:
                     player.to_csv(csvExport)
 
-        with open(f"{output_dir}/{standing.directory}_{standing.tournament_directory}.json", 'w') as json_export:
+        with open(f"{output_dir}/{standing.tournament_directory}/{standing.directory}/standings.json", 'w') as json_export:
             json.dump(standing.players, json_export, default=lambda o: o.to_json(), separators=(',', ':'),
                       ensure_ascii=False)
 
-        with open(f"{output_dir}/{standing.directory}_{standing.tournament_directory}_discrepancy.txt",
+        with open(f"{output_dir}/{standing.tournament_directory}/{standing.directory}/discrepancy.txt",
                   'w') as discrepancy_report:
             if len(published_standings) > 0:
                 for player in standing.players:
@@ -523,7 +526,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--url")
     parser.add_argument("--id")
-    parser.add_argument("--output-dir", help="output directory")
+    parser.add_argument("--output-dir", help="output directory", default='.')
 
     args = parser.parse_args()
 
@@ -531,4 +534,5 @@ if __name__ == "__main__":
     id = '0000090'
     url = 'BA189xznzDvlCdfoQlBC'
     """
+    os.makedirs(args.output_dir, exist_ok=True)
     main_worker(args.id, args.url, args.output_dir)
