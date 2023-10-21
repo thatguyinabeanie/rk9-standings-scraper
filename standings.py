@@ -500,6 +500,9 @@ def main_worker(directory, link, output_dir):
 
         add_tournament_to_index(f"{output_dir}/tournaments.json", tour_data)
 
+        with open(f"{output_dir}/{standing.tournament_directory}/tournament.json", "w") as tournament_export:
+            json.dump(tour_data, tournament_export, separators=(',', ':'), ensure_ascii=False)
+
         with open(f"{output_dir}/{standing.tournament_directory}/{standing.directory}/tables.csv", 'wb') as csvExport:
             for player in standing.players:
                 if player:
