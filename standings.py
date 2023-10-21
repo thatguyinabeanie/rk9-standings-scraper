@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import re
 import argparse
@@ -57,7 +57,7 @@ def init_tournament(ident, name, start_date, end_date, rk9_id):
             "seniors": None,
             "masters": None
         },
-        "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        "lastUpdated": datetime.now(timezone.utc).isoformat(),
         "rk9link": rk9_id,
     }
 
@@ -488,7 +488,7 @@ def main_worker(directory, link, output_dir):
             json.dump(standing.tables, tables_file, separators=(',', ':'), ensure_ascii=False)
 
         if len(standing.players) > 0:
-            tour_data['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            tour_data['lastUpdated'] = datetime.now(timezone.utc).isoformat()
             tour_data['roundNumbers'][standing.directory.lower()] = rounds_from_url
             tour_data['players'][standing.directory.lower()] = len(standing.players)
             if winner is not None:
