@@ -260,7 +260,7 @@ class Player:
             'drop': self.dropRound,
             'rounds': {
                 current_round: {
-                    'name': self.matches[current_round - 1].player.name,
+                    'name': getattr(self.matches[current_round - 1].player, 'name', 'LATE'),
                     'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[self.matches[current_round - 1].status],
                     'table': int(self.matches[current_round - 1].table)
                 } for current_round in range(1, len(self.matches) + 1)
