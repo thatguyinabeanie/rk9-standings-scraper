@@ -61,6 +61,27 @@ def init_tournament(ident, name, start_date, end_date, rk9_id):
     }
 
 
+def get_round_count(players):
+    if 4 <= players <= 8:
+        return 3, 0, 0
+    elif players <= 12:
+        return 4, 0, 2
+    elif players <= 20:
+        return 5, 0, 2
+    elif players <= 32:
+        return 5, 0, 3
+    elif players <= 64:
+        return 6, 0, 3
+    elif players <= 128:
+        return 7, 0, 3
+    elif players <= 226:
+        return 8, 0, 3
+    elif players <= 799:
+        return 9, 5, 3
+    else:
+        return 9, 6, 3
+
+
 def parse_rk9_date_range(input_str):
     months = {
         'jan': '01',
@@ -436,44 +457,12 @@ def main_worker(directory, link, output_dir):
             nb_players_start = nb_players - len([player.name for player in
                                    filter(lambda player: player.matches[0].player.name == "LATE", standing.players)])
 
-            if standing.rounds_day1 == 999:
+            if are_rounds_set is False:
                 are_rounds_set = True
-                if 4 <= nb_players_start <= 8:
-                    standing.rounds_day1 = 3
-                    standing.rounds_day2 = 3
-                    standing.rounds_cut = 0
-                elif nb_players_start <= 12:
-                    standing.rounds_day1 = 4
-                    standing.rounds_day2 = 4
-                    standing.rounds_cut = 2
-                elif nb_players_start <= 20:
-                    standing.rounds_day1 = 5
-                    standing.rounds_day2 = 5
-                    standing.rounds_cut = 2
-                elif nb_players_start <= 32:
-                    standing.rounds_day1 = 5
-                    standing.rounds_day2 = 5
-                    standing.rounds_cut = 3
-                elif nb_players_start <= 64:
-                    standing.rounds_day1 = 6
-                    standing.rounds_day2 = 6
-                    standing.rounds_cut = 3
-                elif nb_players_start <= 128:
-                    standing.rounds_day1 = 7
-                    standing.rounds_day2 = 7
-                    standing.rounds_cut = 3
-                elif nb_players_start <= 226:
-                    standing.rounds_day1 = 8
-                    standing.rounds_day2 = 8
-                    standing.rounds_cut = 3
-                elif nb_players_start <= 799:
-                    standing.rounds_day1 = 9
-                    standing.rounds_day2 = 14
-                    standing.rounds_cut = 3
-                else:
-                    standing.rounds_day1 = 9
-                    standing.rounds_day2 = 15
-                    standing.rounds_cut = 3
+                round_counts = get_round_count(nb_players_start)
+                standing.rounds_day1 = round_counts[0]
+                standing.rounds_day2 = round_counts[0] + round_counts[1]
+                standing.rounds_cut = round_counts[2]
 
             if are_rounds_set is True and iRounds == 0:
                 print(f'Standing : {standing.tournament_name} - in {standing.tournament_directory}/{standing.directory} for {standing.division_name} NbPlayers: {len(standing.players)} -> [{standing.level}/{standing.rounds_day1}/{standing.rounds_day2}]')
