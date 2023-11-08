@@ -40,7 +40,6 @@ def init_tournament(ident, name, start_date, end_date, rk9_id):
             "start": start_date,
             "end": end_date
         },
-        "decklists": 0,
         "players": {
             "juniors": 0,
             "seniors": 0,

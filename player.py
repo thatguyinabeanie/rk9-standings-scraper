@@ -256,7 +256,6 @@ class Player:
                 'opp': self.OppWinPercentage,
                 'oppopp': self.OppOppWinPercentage
             },
-            'decklist': json.loads(self.decklist_json) if len(self.decklist_json) > 0 else '',
             'drop': self.dropRound,
             'rounds': {
                 current_round: {
