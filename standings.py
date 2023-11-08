@@ -433,41 +433,45 @@ def main_worker(directory, link, output_dir):
                                                     round(p.OppOppWinPercentage * 100, 2)), reverse=True)
                                                 place = place - 1
 
+            # Late players are not considered when determining round count.
+            nb_players_start = nb_players - len([player.name for player in
+                                   filter(lambda player: player.matches[0].player.name == "LATE", standing.players)])
+
             if standing.rounds_day1 == 999:
                 are_rounds_set = True
-                if 4 <= nb_players <= 8:
+                if 4 <= nb_players_start <= 8:
                     standing.rounds_day1 = 3
                     standing.rounds_day2 = 3
                     standing.rounds_cut = 0
-                if 9 <= nb_players <= 12:
+                elif nb_players_start <= 12:
                     standing.rounds_day1 = 4
                     standing.rounds_day2 = 4
                     standing.rounds_cut = 2
-                if 13 <= nb_players <= 20:
+                elif nb_players_start <= 20:
                     standing.rounds_day1 = 5
                     standing.rounds_day2 = 5
                     standing.rounds_cut = 2
-                if 21 <= nb_players <= 32:
+                elif nb_players_start <= 32:
                     standing.rounds_day1 = 5
                     standing.rounds_day2 = 5
                     standing.rounds_cut = 3
-                if 33 <= nb_players <= 64:
+                elif nb_players_start <= 64:
                     standing.rounds_day1 = 6
                     standing.rounds_day2 = 6
                     standing.rounds_cut = 3
-                if 65 <= nb_players <= 128:
+                elif nb_players_start <= 128:
                     standing.rounds_day1 = 7
                     standing.rounds_day2 = 7
                     standing.rounds_cut = 3
-                if 129 <= nb_players <= 226:
+                elif nb_players_start <= 226:
                     standing.rounds_day1 = 8
                     standing.rounds_day2 = 8
                     standing.rounds_cut = 3
-                if 227 <= nb_players <= 799:
+                elif nb_players_start <= 799:
                     standing.rounds_day1 = 9
                     standing.rounds_day2 = 14
                     standing.rounds_cut = 3
-                if nb_players >= 800:
+                else:
                     standing.rounds_day1 = 9
                     standing.rounds_day2 = 15
                     standing.rounds_cut = 3
