@@ -267,3 +267,21 @@ class Player:
                 } for current_round in range(1, len(self.matches) + 1)
             }
         }
+
+    def summary_json(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'placing': self.topPlacement,
+            'record': {
+                'wins': self.wins,
+                'losses': self.losses,
+                'ties': self.ties
+            },
+            'resistances': {
+                'self': self.WinPercentage,
+                'opp': self.OppWinPercentage,
+                'oppopp': self.OppOppWinPercentage
+            },
+            'drop': self.dropRound
+        }
