@@ -244,6 +244,7 @@ class Player:
     # toJson
     def to_json(self):
         return {
+            'id': self.id,
             'name': self.name,
             'placing': self.topPlacement,
             'record': {
@@ -259,6 +260,7 @@ class Player:
             'drop': self.dropRound,
             'rounds': {
                 current_round: {
+                    'id': getattr(self.matches[current_round - 1].player, 'id', 0),
                     'name': getattr(self.matches[current_round - 1].player, 'name', 'LATE'),
                     'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[self.matches[current_round - 1].status],
                     'table': int(self.matches[current_round - 1].table)
