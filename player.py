@@ -1,6 +1,3 @@
-import json
-
-
 # class Match : VS a player, with a status [W/L/T -> 2/0/1] and a table number
 class Match:
     def __init__(self, player, status, table):
@@ -242,7 +239,7 @@ class Player:
             current_round += 1
 
     # toJson
-    def to_json(self):
+    def to_json(self, players):
         return {
             'id': self.id,
             'name': self.name,
@@ -263,7 +260,12 @@ class Player:
                     'id': getattr(self.matches[current_round - 1].player, 'id', 0),
                     'name': getattr(self.matches[current_round - 1].player, 'name', 'LATE'),
                     'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[self.matches[current_round - 1].status],
-                    'table': int(self.matches[current_round - 1].table)
+                    'table': int(self.matches[current_round - 1].table),
+                    'record': next(({
+                        'wins': x.wins,
+                        'losses': x.losses,
+                        'ties': x.ties,
+                    } for x in players if x.id == getattr(self.matches[current_round - 1].player, 'id', 0)), None)
                 } for current_round in range(1, len(self.matches) + 1)
             }
         }

@@ -499,7 +499,7 @@ def main_worker(directory, link, output_dir):
 
         for player in standing.players:
             with open(f'{standing_directory}/players/{player.id}.json', 'w') as json_export:
-                json.dump(player, json_export, default=lambda o: o.to_json(), separators=(',', ':'), ensure_ascii=False)
+                json.dump(player, json_export, default=lambda o: o.to_json(standing.players), separators=(',', ':'), ensure_ascii=False)
 
         with open(f"{standing_directory}/discrepancy.txt", 'w') as discrepancy_report:
             if len(published_standings) > 0:
