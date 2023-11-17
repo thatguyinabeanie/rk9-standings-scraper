@@ -456,7 +456,7 @@ def main_worker(directory, link, output_dir):
                                                 place = place - 1
 
             # Late players are not considered when determining round count.
-            nb_players_start = nb_players - len([entry for entry in filter(lambda player: player.matches[0].player.name == "LATE", standing.players)])
+            nb_players_start = nb_players - len([entry for entry in filter(lambda player: getattr(player.matches[0].player, 'name', None) == "LATE", standing.players)])
 
             if are_rounds_set is False:
                 are_rounds_set = True
