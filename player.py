@@ -271,9 +271,11 @@ class Player:
         }
 
         if teams is not None:
-            result['team'] = teams[f'{self.id}']
+            result['team'] = teams[f'{self.id}']['team']
+            result['paste'] = teams[f'{self.id}']['paste']
             for i in result['rounds']:
-                result['rounds'][i]['team'] = teams[f'{self.id}']
+                if result['rounds'][i]['id'] != 0:
+                    result['rounds'][i]['team'] = teams[f"{result['rounds'][i]['id']}"]['team']
 
         return result
 
