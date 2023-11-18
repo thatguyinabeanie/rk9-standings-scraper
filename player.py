@@ -298,6 +298,6 @@ class Player:
         }
 
         if teams is not None:
-            result['team'] = teams[f'{self.id}']
+            result['team'] = teams[f'{self.id}']['team']
 
         return result
