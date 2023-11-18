@@ -157,6 +157,14 @@ def main_worker(directory, link, output_dir):
         os.makedirs(standing_directory, exist_ok=True)
         os.makedirs(f'{standing_directory}/players', exist_ok=True)
 
+        teams = None
+        try:
+            with open(f"{standing_directory}/teams.json", 'r') as teams_file:
+                teams = json.load(teams_file)
+        except FileNotFoundError:
+            # File is added by team scraping process (currently Flintstoned)
+            pass
+
         winner = None
         # requesting RK9 pairings webpage
         url = 'https://rk9.gg/pairings/' + standing.url
@@ -494,12 +502,12 @@ def main_worker(directory, link, output_dir):
                     player.to_csv(csvExport)
 
         with open(f"{standing_directory}/standings.json", 'w') as json_export:
-            json.dump(standing.players, json_export, default=lambda o: o.summary_json(), separators=(',', ':'),
+            json.dump(standing.players, json_export, default=lambda o: o.summary_json(teams), separators=(',', ':'),
                       ensure_ascii=False)
 
         for player in standing.players:
             with open(f'{standing_directory}/players/{player.id}.json', 'w') as json_export:
-                json.dump(player, json_export, default=lambda o: o.to_json(standing.players), separators=(',', ':'), ensure_ascii=False)
+                json.dump(player, json_export, default=lambda o: o.to_json(standing.players, teams), separators=(',', ':'), ensure_ascii=False)
 
         with open(f"{standing_directory}/discrepancy.txt", 'w') as discrepancy_report:
             if len(published_standings) > 0:

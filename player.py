@@ -239,8 +239,8 @@ class Player:
             current_round += 1
 
     # toJson
-    def to_json(self, players):
-        return {
+    def to_json(self, players, teams):
+        result = {
             'id': self.id,
             'name': self.name,
             'placing': self.topPlacement,
@@ -270,8 +270,15 @@ class Player:
             }
         }
 
-    def summary_json(self):
-        return {
+        if teams is not None:
+            result['team'] = teams[f'{self.id}']
+            for i in result['rounds']:
+                result['rounds'][i]['team'] = teams[f'{self.id}']
+
+        return result
+
+    def summary_json(self, teams):
+        result = {
             'id': self.id,
             'name': self.name,
             'placing': self.topPlacement,
@@ -287,3 +294,8 @@ class Player:
             },
             'drop': self.dropRound
         }
+
+        if teams is not None:
+            result['team'] = teams[f'{self.id}']
+
+        return result
