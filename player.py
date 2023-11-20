@@ -299,5 +299,6 @@ class Player:
 
         if teams is not None:
             result['team'] = teams[f'{self.id}']['team']
+            result['paste'] = teams[f'{self.id}']['paste']
 
         return result
