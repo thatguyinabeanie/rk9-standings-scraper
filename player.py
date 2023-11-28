@@ -276,6 +276,7 @@ class Player:
             for i in result['rounds']:
                 if result['rounds'][i]['id'] != 0:
                     result['rounds'][i]['team'] = teams[f"{result['rounds'][i]['id']}"]['team']
+                    result['rounds'][i]['paste'] = teams[f"{result['rounds'][i]['id']}"]['paste']
 
         return result
 
