@@ -71,7 +71,10 @@ class Event:
 
         for (i, tour) in enumerate(index_data):
             if tour['id'] == self.event_id:
-                index_data[i] = self.to_dict()
+                index_data[i] = {
+                    "id": self.event_id,
+                    "name": self.name
+                }
                 break
         else:
             index_data.append(self.to_dict())
