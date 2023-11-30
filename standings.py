@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 import unicodedata
 import requests
 
-from standing import Standing
 from player import Player
+from event import Event
 
 
 def remove_country(name):
@@ -30,35 +30,6 @@ def strip_accents(input_str):
 # points access for sorting function
 def points(elem):
     return elem.points
-
-
-def init_tournament(ident, name, start_date, end_date, rk9_id):
-    return {
-        "id": ident,
-        "name": name,
-        "date": {
-            "start": start_date,
-            "end": end_date
-        },
-        "players": {
-            "juniors": 0,
-            "seniors": 0,
-            "masters": 0
-        },
-        "winners": {
-            "juniors": None,
-            "seniors": None,
-            "masters": None
-        },
-        "tournamentStatus": "not-started",
-        "roundNumbers": {
-            "juniors": None,
-            "seniors": None,
-            "masters": None
-        },
-        "lastUpdated": datetime.now(timezone.utc).isoformat(),
-        "rk9link": rk9_id,
-    }
 
 
 def get_round_count(players):
@@ -107,26 +78,6 @@ def parse_rk9_date_range(input_str):
     return start_date, end_date
 
 
-def add_tournament_to_index(index_filename, tour_data):
-    index_data = []
-
-    try:
-        with open(index_filename, 'r') as indexFile:
-            index_data = json.load(indexFile)
-    except OSError:
-        pass
-
-    for (i, tour) in enumerate(index_data):
-        if tour['id'] == tour_data['id']:
-            index_data[i] = tour_data
-            break
-    else:
-        index_data.append(tour_data)
-
-    with open(index_filename, 'w') as indexFile:
-        json.dump(index_data, indexFile)
-
-
 def main_worker(directory, link, output_dir):
     last_page_loaded = ""
 
@@ -144,16 +95,12 @@ def main_worker(directory, link, output_dir):
     str_time = now.strftime("%Y/%m/%d - %H:%M:%S")
     print('starting at : ' + str_time)
 
-    standings = [Standing(title, directory, 'juniors', 'Juniors', link, []),
-                 Standing(title, directory, 'seniors', 'Seniors', link, []),
-                 Standing(title, directory, 'masters', 'Masters', link, [])]
+    tour_data = Event(directory, title, dates[0], dates[1], link)
 
-    tour_data = init_tournament(directory, title, dates[0], dates[1], link)
+    for standing in tour_data.standings_list():
+        print(f'{tour_data.event_id}/{standing.directory}')
 
-    for standing in standings:
-        print(f'Standing : {standing.tournament_name} - in {standing.tournament_directory}/{standing.directory} for {standing.division_name} [{standing.level}/{standing.rounds_day1}/{standing.rounds_day2}]')
-
-        standing_directory = f'{output_dir}/{standing.tournament_directory}/{standing.directory}'
+        standing_directory = f'{output_dir}/{tour_data.event_id}/{standing.directory}'
         os.makedirs(standing_directory, exist_ok=True)
         os.makedirs(f'{standing_directory}/players', exist_ok=True)
 
@@ -167,7 +114,7 @@ def main_worker(directory, link, output_dir):
 
         winner = None
         # requesting RK9 pairings webpage
-        url = 'https://rk9.gg/pairings/' + standing.url
+        url = 'https://rk9.gg/pairings/' + tour_data.rk9_id
         print("\t" + url)
         if last_page_loaded != url:
             last_page_loaded = url
@@ -426,15 +373,15 @@ def main_worker(directory, link, output_dir):
 
             if iRounds + 1 <= standing.rounds_day2:
                 standing.players.sort(key=lambda p: (
-                    not p.dqed, p.points, p.late, round(p.OppWinPercentage * 100, 2),
-                    round(p.OppOppWinPercentage * 100, 2)), reverse=True)
+                    not p.dqed, p.points, p.late, round(p.opp_win_percentage * 100, 2),
+                    round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                 placement = 1
                 for player in standing.players:
                     if not player.dqed:
-                        player.topPlacement = placement
+                        player.top_placement = placement
                         placement = placement + 1
                     else:
-                        player.topPlacement = 9999
+                        player.top_placement = 9999
             else:
                 if iRounds + 1 > standing.rounds_day2:
                     for place in range(nb_players):
@@ -453,18 +400,19 @@ def main_worker(directory, link, output_dir):
                                             if standing.players[above].matches[len(standing.players[
                                                     place].matches) - 1].status == 0:
                                                 # if player above won, stop searching
-                                                temp_placement = standing.players[above].topPlacement
-                                                standing.players[above].topPlacement = standing.players[
-                                                    place].topPlacement
-                                                standing.players[place].topPlacement = temp_placement
+                                                temp_placement = standing.players[above].top_placement
+                                                standing.players[above].top_placement = standing.players[
+                                                    place].top_placement
+                                                standing.players[place].top_placement = temp_placement
                                                 standing.players.sort(key=lambda p: (
-                                                    not p.dqed, nb_players - p.topPlacement - 1, p.points, p.late,
-                                                    round(p.OppWinPercentage * 100, 2),
-                                                    round(p.OppOppWinPercentage * 100, 2)), reverse=True)
+                                                    not p.dqed, nb_players - p.top_placement - 1, p.points, p.late,
+                                                    round(p.opp_win_percentage * 100, 2),
+                                                    round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                                                 place = place - 1
 
             # Late players are not considered when determining round count.
-            nb_players_start = nb_players - len([entry for entry in filter(lambda player: getattr(player.matches[0].player, 'name', None) == "LATE", standing.players)])
+            # TODO: unless they are :^)
+            nb_players_start = nb_players - len([entry for entry in filter(lambda p: getattr(p.matches[0].player, 'name', None) == "LATE", standing.players)])
 
             if are_rounds_set is False:
                 are_rounds_set = True
@@ -474,7 +422,7 @@ def main_worker(directory, link, output_dir):
                 standing.rounds_cut = round_counts[2]
 
             if are_rounds_set is True and iRounds == 0:
-                print(f'Standing : {standing.tournament_name} - in {standing.tournament_directory}/{standing.directory} for {standing.division_name} NbPlayers: {len(standing.players)} -> [{standing.level}/{standing.rounds_day1}/{standing.rounds_day2}]')
+                print(f'{len(standing.players)}/{standing.rounds_day1}/{standing.rounds_day2}')
                 with open(f"{standing_directory}/players.json",
                           'w') as jsonPlayers:
                     json.dump({
@@ -488,13 +436,13 @@ def main_worker(directory, link, output_dir):
             json.dump(standing.tables, tables_file, separators=(',', ':'), ensure_ascii=False)
 
         if len(standing.players) > 0:
-            tour_data['tournamentStatus'] = "running"
-            tour_data['roundNumbers'][standing.directory.lower()] = rounds_from_url
-            tour_data['players'][standing.directory.lower()] = len(standing.players)
+            tour_data.tournament_status = "running"
+            tour_data.divisions[standing.directory.lower()].round_number = rounds_from_url
+            tour_data.divisions[standing.directory.lower()].player_count = len(standing.players)
             if winner is not None:
-                tour_data['winners'][standing.directory.lower()] = winner.name
+                tour_data.divisions[standing.directory.lower()].winner = winner.name
 
-        add_tournament_to_index(f"{output_dir}/tournaments.json", tour_data)
+        tour_data.add_to_index(f"{output_dir}/tournaments.json")
 
         with open(f"{standing_directory}/tables.csv", 'wb') as csvExport:
             for player in standing.players:
@@ -512,18 +460,23 @@ def main_worker(directory, link, output_dir):
         with open(f"{standing_directory}/discrepancy.txt", 'w') as discrepancy_report:
             if len(published_standings) > 0:
                 for player in standing.players:
-                    if player and player.topPlacement - 1 < len(published_standings) and player.name != \
-                            published_standings[player.topPlacement - 1]:
+                    if player and player.top_placement - 1 < len(published_standings) and player.name != \
+                            published_standings[player.top_placement - 1]:
                         discrepancy_report.write(
-                            f"{player.topPlacement} RK9: {published_standings[player.topPlacement - 1]} --- {player.name}\n")
+                            f"{player.top_placement} RK9: {published_standings[player.top_placement - 1]} --- {player.name}\n")
 
-    tour_data['lastUpdated'] = datetime.now(timezone.utc).isoformat()
-    winners = tour_data['winners']
+    tour_data.last_updated = datetime.now(timezone.utc).isoformat()
+
+    winners = {
+        'juniors': tour_data.divisions['juniors'].winner,
+        'seniors': tour_data.divisions['seniors'].winner,
+        'masters': tour_data.divisions['masters'].winner,
+    }
     if winners['juniors'] is not None and winners['seniors'] is not None and winners['masters'] is not None:
-        tour_data['tournamentStatus'] = "finished"
+        tour_data.tournament_status = "finished"
 
-    with open(f"{output_dir}/{tour_data['id']}/tournament.json", "w") as tournament_export:
-        json.dump(tour_data, tournament_export, separators=(',', ':'), ensure_ascii=False)
+    with open(f"{output_dir}/{tour_data.event_id}/tournament.json", "w") as tournament_export:
+        json.dump(tour_data.to_dict(), tournament_export, separators=(',', ':'), ensure_ascii=False)
 
     now = datetime.now()  # current date and time
     print('Ending at ' + now.strftime("%Y/%m/%d - %H:%M:%S") + " with no issues")

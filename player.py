@@ -24,11 +24,11 @@ class Player:
         self.losses2 = 0
 
         # minimum/maximum points. Used for the R/Y/G colors for Day2/TopCut (not 100% working)
-        self.minPoints = 0
-        self.maxPoints = 0
+        self.min_points = 0
+        self.max_points = 0
 
         # nb matches completed
-        self.completedMatches = 0
+        self.completed_matches = 0
 
         # points (3*W+T)
         self.points = 0
@@ -44,17 +44,17 @@ class Player:
         # - Play! Pokémon Tournament Rules Handbook
 
         # player resistance
-        self.WinPercentage = 0.25
+        self.win_percentage = 0.25
         # opponents' resistance
-        self.OppWinPercentage = 0.25
+        self.opp_win_percentage = 0.25
         # opponents' opponents' resistance
-        self.OppOppWinPercentage = 0.25
+        self.oppopp_win_percentage = 0.25
 
         # if player is dropped, dropRound > 0
-        self.dropRound = -1
+        self.drop_round = -1
 
         # placement after sorting players
-        self.topPlacement = 0
+        self.top_placement = 0
 
         # country if found in /roster/ or within the player's name in the pairings (between [])
         self.country = ""
@@ -69,12 +69,6 @@ class Player:
         if self.name[len(self.name) - 1] == ']':
             self.country = self.name[len(self.name) - 3:len(self.name) - 1].lower()
 
-        # decklists (found in /roster/ long after the tournament, or never)
-        # ptcgo format
-        self.decklist_ptcgo = ""
-        # json format
-        self.decklist_json = ""
-
     # addMatch function : adding a game versus another player
     # player : VS player
     # status : -1 still playing / 0 loss / 1 tie / 2 win
@@ -83,9 +77,9 @@ class Player:
     # isTop : is a top cut match
     # table : table #
     def add_match(self, player, status, dropped, is_day2, is_top, table):
-        if self.dropRound > -1:
+        if self.drop_round > -1:
             # reset for late players
-            self.dropRound = -1
+            self.drop_round = -1
         if status == 0:
             if player is None:
                 # player is late
@@ -94,13 +88,13 @@ class Player:
             if is_day2 and not is_top:
                 # day 2 swiss
                 self.losses2 += 1
-            self.completedMatches += 1
+            self.completed_matches += 1
         if status == 1:
             self.ties += 1
             if is_day2 and not is_top:
                 # day 2 swiss
                 self.ties2 += 1
-            self.completedMatches += 1
+            self.completed_matches += 1
         if status == 2:
             if player is None:
                 # player got a bye
@@ -109,11 +103,11 @@ class Player:
             if is_day2 and not is_top:
                 # day 2 swiss
                 self.wins2 += 1
-            self.completedMatches += 1
+            self.completed_matches += 1
         self.points = self.wins * 3 + self.ties
         self.matches.append(Match(player, status, table))
         if dropped:
-            self.dropRound = len(self.matches)
+            self.drop_round = len(self.matches)
 
     # update player's win percentage
     # day1Rounds : number of round in day 1
@@ -121,8 +115,8 @@ class Player:
     # currentRound...
     # resistance is calculated every round
     def update_win_percentage(self, day1_rounds, day2_rounds, current_round):
-        if self.dropRound == -1 or self.dropRound == current_round:
-            self.WinPercentage = 0
+        if self.drop_round == -1 or self.drop_round == current_round:
+            self.win_percentage = 0
             val = 0
             count = 0
             counter = 0
@@ -143,14 +137,14 @@ class Player:
                 val = val / count
             if val < 0.25:
                 val = 0.25
-            if self.dropRound > 0 and not self.dqed:
+            if self.drop_round > 0 and not self.dqed:
                 if val > 0.75:
                     val = 0.75
-            self.WinPercentage = val
+            self.win_percentage = val
 
     # same as update_win_percentage but Opp Win percentage
     def update_opponent_win_percentage(self, day1_rounds, day2_rounds, current_round):
-        if ((self.dropRound == -1 or self.dropRound == current_round)
+        if ((self.drop_round == -1 or self.drop_round == current_round)
                 and (len(self.matches) > day1_rounds or current_round <= day1_rounds)):
             val = 0
             count = 0
@@ -159,7 +153,7 @@ class Player:
                 if (len(self.matches) >= day1_rounds and day1_rounds <= counter < day2_rounds) or len(
                         self.matches) <= day1_rounds or day1_rounds == 0:
                     if match.player is not None and not (match.player.name == "BYE"):
-                        win_percentage = match.player.WinPercentage
+                        win_percentage = match.player.win_percentage
                         if win_percentage > 0:
                             val = val + win_percentage
                             count = count + 1
@@ -168,11 +162,11 @@ class Player:
                 val = val / count
             if val < 0.25:
                 val = 0.25
-            self.OppWinPercentage = val
+            self.opp_win_percentage = val
 
     # same as UpdateWinP but Opp Opp Win percentage
     def update_oppopp_win_percentage(self, day1_rounds, day2_rounds, current_round):
-        if (self.dropRound == -1 or self.dropRound == current_round) and (
+        if (self.drop_round == -1 or self.drop_round == current_round) and (
                 (current_round > day1_rounds and len(self.matches) > day1_rounds) or (current_round <= day1_rounds)):
             val = 0
             count = 0
@@ -181,14 +175,14 @@ class Player:
                 if (len(self.matches) >= day1_rounds and day1_rounds <= counter < day2_rounds) or len(
                         self.matches) <= day1_rounds or day1_rounds == 0:
                     if match.player is not None and not (match.player.name == "BYE"):
-                        val = val + match.player.OppWinPercentage
+                        val = val + match.player.opp_win_percentage
                         count = count + 1
                 counter = counter + 1
             if count > 0:
                 val = val / count
             if val < 0.25:
                 val = 0.25
-            self.OppOppWinPercentage = val
+            self.oppopp_win_percentage = val
 
     # special logging/debug methods to output some data
     def __repr__(self):
@@ -243,18 +237,18 @@ class Player:
         result = {
             'id': self.id,
             'name': self.name,
-            'placing': self.topPlacement,
+            'placing': self.top_placement,
             'record': {
                 'wins': self.wins,
                 'losses': self.losses,
                 'ties': self.ties
             },
             'resistances': {
-                'self': self.WinPercentage,
-                'opp': self.OppWinPercentage,
-                'oppopp': self.OppOppWinPercentage
+                'self': self.win_percentage,
+                'opp': self.opp_win_percentage,
+                'oppopp': self.oppopp_win_percentage
             },
-            'drop': self.dropRound,
+            'drop': self.drop_round,
             'rounds': {
                 current_round: {
                     'id': getattr(self.matches[current_round - 1].player, 'id', 0),
@@ -284,18 +278,18 @@ class Player:
         result = {
             'id': self.id,
             'name': self.name,
-            'placing': self.topPlacement,
+            'placing': self.top_placement,
             'record': {
                 'wins': self.wins,
                 'losses': self.losses,
                 'ties': self.ties
             },
             'resistances': {
-                'self': self.WinPercentage,
-                'opp': self.OppWinPercentage,
-                'oppopp': self.OppOppWinPercentage
+                'self': self.win_percentage,
+                'opp': self.opp_win_percentage,
+                'oppopp': self.oppopp_win_percentage
             },
-            'drop': self.dropRound
+            'drop': self.drop_round
         }
 
         if teams is not None:
