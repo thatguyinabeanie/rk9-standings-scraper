@@ -431,7 +431,7 @@ def main_worker(directory, link, output_dir):
                         'players': [{'id': str(player.id), 'name': player.name} for player in standing.players]
                     }, jsonPlayers, separators=(',', ':'), ensure_ascii=False)
 
-            if iRounds + 1 == standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
+            if iRounds + 1 >= standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
                 winner = standing.players[0]
 
         with open(f"{standing_directory}/tables.json", 'w') as tables_file:
