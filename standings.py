@@ -97,10 +97,12 @@ def main_worker(directory, link, output_dir):
 
     tour_data = Event(directory, title, dates[0], dates[1], link)
 
-    for standing in tour_data.standings_list():
-        print(f'{tour_data.event_id}/{standing.directory}')
+    for division_name in tour_data.divisions:
+        division = tour_data.divisions[division_name]
+        standing = division.standing
+        print(f'{tour_data.event_id}/{division_name}')
 
-        standing_directory = f'{output_dir}/{tour_data.event_id}/{standing.directory}'
+        standing_directory = f'{output_dir}/{tour_data.event_id}/{division_name}'
         os.makedirs(standing_directory, exist_ok=True)
         os.makedirs(f'{standing_directory}/players', exist_ok=True)
 
@@ -128,7 +130,7 @@ def main_worker(directory, link, output_dir):
             for litag in ultag.find_all('li'):
                 for aria in litag.find_all('a'):
                     sp = aria.text.split(" ")
-                    if sp[0][0:-1].lower() == standing.division_name[0:len(sp[0][0:-1])].lower():
+                    if sp[0][0:-1].lower() == division_name[0:len(sp[0][0:-1])]:
                         rounds_from_url = int(sp[len(sp) - 1])
                         standing.level = str(aria['aria-controls'])
 
@@ -305,7 +307,7 @@ def main_worker(directory, link, output_dir):
                 if p1 is None:
                     if len(player1_name) > 0:
                         standing.player_id = standing.player_id + 1
-                        p1 = Player(player1_name, standing.division_name, standing.player_id, p1late)
+                        p1 = Player(player1_name, division_name, standing.player_id, p1late)
                         if p1.name in standing.dqed or (
                                 len(published_standings) > 0 and p1.name not in published_standings):
                             p1.dqed = True
@@ -314,7 +316,7 @@ def main_worker(directory, link, output_dir):
                 if p2 is None:
                     if len(player2_name) > 0:
                         standing.player_id = standing.player_id + 1
-                        p2 = Player(player2_name, standing.division_name, standing.player_id, p2late)
+                        p2 = Player(player2_name, division_name, standing.player_id, p2late)
                         if p2.name in standing.dqed or (
                                 len(published_standings) > 0 and p2.name not in published_standings):
                             p2.dqed = True
@@ -437,10 +439,10 @@ def main_worker(directory, link, output_dir):
 
         if len(standing.players) > 0:
             tour_data.tournament_status = "running"
-            tour_data.divisions[standing.directory.lower()].round_number = rounds_from_url
-            tour_data.divisions[standing.directory.lower()].player_count = len(standing.players)
+            tour_data.divisions[division_name].round_number = rounds_from_url
+            tour_data.divisions[division_name].player_count = len(standing.players)
             if winner is not None:
-                tour_data.divisions[standing.directory.lower()].winner = winner.name
+                tour_data.divisions[division_name].winner = winner.name
 
         tour_data.add_to_index(f"{output_dir}/tournaments.json")
 

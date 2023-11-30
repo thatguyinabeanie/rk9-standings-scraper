@@ -5,11 +5,11 @@ from standing import Standing
 
 
 class Division:
-    def __init__(self, division_name):
+    def __init__(self):
         self.player_count = 0
         self.winner = None
         self.round_number = 0
-        self.standing = Standing(division_name.lower(), division_name)
+        self.standing = Standing()
 
 
 class Event:
@@ -22,9 +22,9 @@ class Event:
         self.rk9_id = rk9_id
         self.tournament_status = 'not-started'
         self.divisions = {
-            'juniors': Division('Juniors'),
-            'seniors': Division('Seniors'),
-            'masters': Division('Masters')
+            'juniors': Division(),
+            'seniors': Division(),
+            'masters': Division()
         }
 
     def standings_list(self):
