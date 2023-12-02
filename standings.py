@@ -305,6 +305,7 @@ def main_worker(directory, link, output_dir):
                 'players': [{'id': str(player.id), 'name': player.name} for player in tour_players]
             }, jsonPlayers, separators=(',', ':'), ensure_ascii=False)
 
+        # This could/should be handled within the Division object
         nb_players_start = len(tour_players) - len([entry for entry in filter(lambda p: p.late, tour_players)])
         structure_index = get_round_count(nb_players_start)
         standing.rounds_day1 = round_structures[structure_index][0]

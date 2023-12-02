@@ -11,6 +11,23 @@ class Division:
         self.round_number = 0
         self.standing = Standing()
 
+    def get_highest_kicker(self, is_internats):
+        if is_internats and len(self.standing.players) > 2046:
+            return 1024
+        if len(self.standing.players) > 1024:
+            return 512
+        if len(self.standing.players) > 512:
+            return 256
+        if len(self.standing.players) > 256:
+            return 128
+        if len(self.standing.players) > 128:
+            return 64
+        if len(self.standing.players) > 80:
+            return 32
+        if len(self.standing.players) > 48:
+            return 16
+        return 8
+
 
 class Event:
     def __init__(self, event_id, name, start_date, end_date, rk9_id):
@@ -50,6 +67,20 @@ class Event:
                 'juniors': self.divisions['juniors'].round_number,
                 'seniors': self.divisions['seniors'].round_number,
                 'masters': self.divisions['masters'].round_number
+            },
+            'tournamentStructure': {
+                div: {
+                    'swiss_day_1': self.divisions[div].standing.rounds_day1,
+                    'swiss_day_2': self.divisions[div].standing.rounds_day2 - self.divisions[div].standing.rounds_day1,
+                    'top_cut': self.divisions[div].standing.rounds_cut
+                } for div in ['juniors', 'seniors', 'masters']
+            },
+            'pointsAwards': {
+                div: self.divisions[div].get_highest_kicker('International Championship' in self.name) for div in [
+                    'juniors',
+                    'seniors',
+                    'masters'
+                ]
             },
             "lastUpdated": self.last_updated,
             "rk9link": self.rk9_id,
