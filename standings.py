@@ -150,6 +150,7 @@ def main_worker(directory, link, output_dir):
     for division_name in tour_data.divisions:
         division = tour_data.divisions[division_name]
         standing = division.standing
+        tour_players = standing.players
 
         rounds_from_url = 0
         for ultag in soup.find_all('ul', {'class': 'nav nav-pills'}):
@@ -248,9 +249,10 @@ def main_worker(directory, link, output_dir):
                     if iRounds == 0:
                         p1 = Player(player1_name, division_name, standing.player_id, p1late)
                         if p1.name in standing.dqed or (
-                                len(published_standings[division_name]) > 0 and p1.name not in published_standings[division_name]):
+                                len(published_standings[division_name]) > 0 and
+                                p1.name not in published_standings[division_name]):
                             p1.dqed = True
-                        standing.players.append(p1)
+                        tour_players.append(p1)
                     table_players.append({
                         'name': player1_name,
                         'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[p1status],
@@ -270,7 +272,7 @@ def main_worker(directory, link, output_dir):
                                 len(published_standings[division_name]) > 0 and
                                 p2.name not in published_standings[division_name]):
                             p2.dqed = True
-                        standing.players.append(p2)
+                        tour_players.append(p2)
                     table_players.append({
                         'name': player2_name,
                         'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[p2status],
@@ -300,15 +302,15 @@ def main_worker(directory, link, output_dir):
         with open(f"{standing_directory}/players.json",
                   'w') as jsonPlayers:
             json.dump({
-                'players': [{'id': str(player.id), 'name': player.name} for player in standing.players]
+                'players': [{'id': str(player.id), 'name': player.name} for player in tour_players]
             }, jsonPlayers, separators=(',', ':'), ensure_ascii=False)
 
-        nb_players_start = len(standing.players) - len([entry for entry in filter(lambda p: p.late, standing.players)])
+        nb_players_start = len(tour_players) - len([entry for entry in filter(lambda p: p.late, tour_players)])
         structure_index = get_round_count(nb_players_start)
         standing.rounds_day1 = round_structures[structure_index][0]
         standing.rounds_day2 = round_structures[structure_index][0] + round_structures[structure_index][1]
         standing.rounds_cut = round_structures[structure_index][2]
-        print(f'{len(standing.players)}/{nb_players_start}/{standing.rounds_day1}/{standing.rounds_day2}')
+        print(f'{len(tour_players)}/{nb_players_start}/{standing.rounds_day1}/{standing.rounds_day2}')
         print(f'{tour_data.event_id}/{division_name}')
 
         teams = None
@@ -321,24 +323,10 @@ def main_worker(directory, link, output_dir):
 
         winner = None
 
-        # finding out how many rounds on the page
-        rounds_from_url = 0
-        for ultag in soup.find_all('ul', {'class': 'nav nav-pills'}):
-            for litag in ultag.find_all('li'):
-                for aria in litag.find_all('a'):
-                    sp = aria.text.split(" ")
-                    if sp[0][0:-1].lower() == division_name[0:len(sp[0][0:-1])]:
-                        rounds_from_url = int(sp[len(sp) - 1])
-                        standing.level = str(aria['aria-controls'])
-
-        standing.current_round = rounds_from_url
-
-        rounds_data = soup.find_all("div", id=lambda value: value and value.startswith(standing.level + "R"))
-
         for (i, tables) in enumerate(standing.tables):
             current_round = i + 1
             players_dictionary = {}
-            for player in standing.players:
+            for player in tour_players:
                 counter = 0
                 while f"{player.name}#{counter}" in players_dictionary:
                     counter += 1
@@ -394,82 +382,82 @@ def main_worker(directory, link, output_dir):
                                             current_round > standing.rounds_day1,
                                             current_round > standing.rounds_day2, table['table'])
 
-            for player in standing.players:
+            for player in tour_players:
                 if (len(player.matches) >= standing.rounds_day1) or standing.rounds_day1 > current_round:
                     player.update_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
-            for player in standing.players:
+            for player in tour_players:
                 if (len(player.matches) >= standing.rounds_day1) or standing.rounds_day1 > current_round:
                     player.update_opponent_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
-            for player in standing.players:
+            for player in tour_players:
                 if (len(player.matches) >= standing.rounds_day1) or standing.rounds_day1 > current_round:
                     player.update_oppopp_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
 
             if current_round <= standing.rounds_day2:
-                standing.players.sort(key=lambda p: (
+                tour_players.sort(key=lambda p: (
                     not p.dqed, p.points, not p.late, round(p.opp_win_percentage * 100, 2),
                     round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                 placement = 1
-                for player in standing.players:
+                for player in tour_players:
                     if not player.dqed:
                         player.top_placement = placement
                         placement = placement + 1
                     else:
                         player.top_placement = 9999
             else:
-                for place in range(len(standing.players)):
-                    if len(standing.players[place].matches) == current_round:
-                        if standing.players[place].matches[-1].status == 'W':  # if top win
+                for place in range(len(tour_players)):
+                    if len(tour_players[place].matches) == current_round:
+                        if tour_players[place].matches[-1].status == 'W':  # if top win
                             stop = False
                             for above in range(place - 1, -1, -1):
                                 if not stop:
-                                    if len(standing.players[place].matches) == len(standing.players[above].matches):
-                                        if standing.players[above].matches[-1].status == 'W':
+                                    if len(tour_players[place].matches) == len(tour_players[above].matches):
+                                        if tour_players[above].matches[-1].status == 'W':
                                             # if player above won, stop searching
                                             stop = True
-                                        if standing.players[above].matches[-1].status == 'L':
+                                        if tour_players[above].matches[-1].status == 'L':
                                             # if player above won, stop searching
-                                            temp_placement = standing.players[above].top_placement
-                                            standing.players[above].top_placement = standing.players[place].top_placement
-                                            standing.players[place].top_placement = temp_placement
-                                            standing.players.sort(key=lambda p: (
-                                                not p.dqed, len(standing.players) - p.top_placement - 1, p.points,
+                                            temp_placement = tour_players[above].top_placement
+                                            tour_players[above].top_placement = tour_players[place].top_placement
+                                            tour_players[place].top_placement = temp_placement
+                                            tour_players.sort(key=lambda p: (
+                                                not p.dqed, len(tour_players) - p.top_placement - 1, p.points,
                                                 not p.late, round(p.opp_win_percentage * 100, 2),
                                                 round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                                             place = place - 1
 
             if current_round >= standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
-                winner = standing.players[0]
+                winner = tour_players[0]
 
-        if len(standing.players) > 0:
+        if len(tour_players) > 0:
             tour_data.tournament_status = "running"
             tour_data.divisions[division_name].round_number = rounds_from_url
-            tour_data.divisions[division_name].player_count = len(standing.players)
+            tour_data.divisions[division_name].player_count = len(tour_players)
             if winner is not None:
                 tour_data.divisions[division_name].winner = winner.name
 
         tour_data.add_to_index(f"{output_dir}/tournaments.json")
 
         with open(f"{standing_directory}/tables.csv", 'wb') as csvExport:
-            for player in standing.players:
+            for player in tour_players:
                 if player:
                     player.to_csv(csvExport)
 
         with open(f"{standing_directory}/standings.json", 'w') as json_export:
-            json.dump(standing.players, json_export, default=lambda o: o.summary_json(teams), separators=(',', ':'),
+            json.dump(tour_players, json_export, default=lambda o: o.summary_json(teams), separators=(',', ':'),
                       ensure_ascii=False)
 
-        for player in standing.players:
+        for player in tour_players:
             with open(f'{standing_directory}/players/{player.id}.json', 'w') as json_export:
-                json.dump(player, json_export, default=lambda o: o.to_json(standing.players, teams),
+                json.dump(player, json_export, default=lambda o: o.to_json(tour_players, teams),
                           separators=(',', ':'), ensure_ascii=False)
 
         with open(f"{standing_directory}/discrepancy.txt", 'w') as discrepancy_report:
             if len(published_standings[division_name]) > 0:
-                for player in standing.players:
+                for player in tour_players:
                     if player and player.top_placement - 1 < len(published_standings[division_name]) \
                             and player.name != published_standings[division_name][player.top_placement - 1]:
                         discrepancy_report.write(
-                            f"{player.top_placement} RK9: {published_standings[division_name][player.top_placement - 1]} --- {player.name}\n")
+                            f"{player.top_placement} {player.name} RK9: {published_standings[division_name][player.top_placement - 1]}\n")
 
     tour_data.last_updated = datetime.now(timezone.utc).isoformat()
 
