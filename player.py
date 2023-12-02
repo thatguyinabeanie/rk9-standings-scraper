@@ -80,7 +80,7 @@ class Player:
         if self.drop_round > -1:
             # reset for late players
             self.drop_round = -1
-        if status == 0:
+        if status == 'L':
             if player is None:
                 # player is late
                 player = Player("LATE", "none", 0, 0)
@@ -89,13 +89,13 @@ class Player:
                 # day 2 swiss
                 self.losses2 += 1
             self.completed_matches += 1
-        if status == 1:
+        if status == 'T':
             self.ties += 1
             if is_day2 and not is_top:
                 # day 2 swiss
                 self.ties2 += 1
             self.completed_matches += 1
-        if status == 2:
+        if status == 'W':
             if player is None:
                 # player got a bye
                 player = Player("BYE", "none", 0, 0)
@@ -124,13 +124,13 @@ class Player:
                 if ((len(self.matches) >= day1_rounds and day1_rounds <= counter < day2_rounds)
                         or len(self.matches) <= day1_rounds or day1_rounds == 0):
                     if match.player is not None and not (match.player.name == "BYE"):
-                        if match.status == 2:
+                        if match.status == 'W':
                             val = val + 1
-                        if match.status == 1:
+                        if match.status == 'T':
                             val = val + 0.5
-                        if match.status == 0:
+                        if match.status == 'L':
                             val = val + 0
-                        if match.status != -1:
+                        if match.status is not None:
                             count = count + 1
                 counter = counter + 1
             if count > 0:
@@ -186,23 +186,14 @@ class Player:
 
     # special logging/debug methods to output some data
     def __repr__(self):
-        output = f"{self.name} ({self.level}) {self.wins}-{self.losses}-{self.ties} -- {self.points}pts"
-        for match in self.matches:
-            output += "\n"
-            output += "Vs. " + match.player + " "
-            if match.status == 0:
-                output += "L"
-            if match.status == 1:
-                output += "T"
-            if match.status == 2:
-                output += "W"
+        output = f"{self.name}{'*' if self.late else ''} ({self.level}) {self.wins}-{self.losses}-{self.ties} -- {self.points}pts"
         return output
 
     def __str__(self):
         output = f"{self.name} ({self.level}) {self.wins}-{self.losses}-{self.ties} -- {self.points}pts"
         for match in self.matches:
             output += "\n"
-            output += "\tVs. " + match.player + " "
+            output += "\tVs. " + match.player.name + " "
             if match.status == 0:
                 output += "L"
             if match.status == 1:
@@ -220,12 +211,12 @@ class Player:
             file.write((self.name + '\t').encode())
             if match.player is not None:
                 file.write((match.player.name + '\t').encode())
-            if match.status == 0:
+            if match.status == 'L':
                 file.write('L\t'.encode())
-            if match.status == 1:
+            if match.status == 'T':
                 file.write('T\t'.encode())
                 points += 1
-            if match.status == 2:
+            if match.status == 'W':
                 file.write('W\t'.encode())
                 points += 3
             file.write((str(points) + '\t').encode())
@@ -253,7 +244,7 @@ class Player:
                 current_round: {
                     'id': getattr(self.matches[current_round - 1].player, 'id', 0),
                     'name': getattr(self.matches[current_round - 1].player, 'name', 'LATE'),
-                    'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[self.matches[current_round - 1].status],
+                    'result': self.matches[current_round - 1].status,
                     'table': int(self.matches[current_round - 1].table),
                     'record': next(({
                         'wins': x.wins,

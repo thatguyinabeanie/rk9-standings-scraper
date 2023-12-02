@@ -27,11 +27,6 @@ class Event:
             'masters': Division()
         }
 
-    def standings_list(self):
-        return [self.divisions['juniors'].standing,
-                self.divisions['seniors'].standing,
-                self.divisions['masters'].standing]
-
     def to_dict(self):
         return {
             'id': self.event_id,
