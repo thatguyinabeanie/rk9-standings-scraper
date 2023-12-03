@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import json
+import math
 import re
 import argparse
 import os
@@ -96,6 +97,28 @@ def upgrade_round_count(old_index, tables):
         if len(tables[14]) > 4:
             index = 9
     return index
+
+
+def apply_points(players, is_internats):
+    cutoff = 8
+    if is_internats and len(players) > 2046:
+        cutoff = 1024
+    elif len(players) > 1024:
+        cutoff = 512
+    elif len(players) > 512:
+        cutoff = 256
+    elif len(players) > 256:
+        cutoff = 128
+    elif len(players) > 128:
+        cutoff = 64
+    elif len(players) > 80:
+        cutoff = 32
+    elif len(players) > 48:
+        cutoff = 16
+
+    for player in players:
+        if player.top_placement <= cutoff:
+            player.awards_placement = 2 ** math.ceil(math.log2(player.top_placement))
 
 
 def parse_rk9_date_range(input_str):
@@ -429,6 +452,7 @@ def main_worker(directory, link, output_dir):
 
             if current_round >= standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
                 winner = tour_players[0]
+                apply_points(tour_players, "International Championship" in tour_data.name)
 
         if len(tour_players) > 0:
             tour_data.tournament_status = "running"

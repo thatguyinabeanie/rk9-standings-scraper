@@ -55,6 +55,7 @@ class Player:
 
         # placement after sorting players
         self.top_placement = 0
+        self.awards_placement = None
 
         # country if found in /roster/ or within the player's name in the pairings (between [])
         self.country = ""
@@ -229,6 +230,7 @@ class Player:
             'id': self.id,
             'name': self.name,
             'placing': self.top_placement,
+            'top': self.awards_placement,
             'record': {
                 'wins': self.wins,
                 'losses': self.losses,
