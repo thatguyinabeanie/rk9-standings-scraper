@@ -308,6 +308,7 @@ def main_worker(directory, link, output_dir):
         # This could/should be handled within the Division object
         nb_players_start = len(tour_players) - len([entry for entry in filter(lambda p: p.late, tour_players)])
         structure_index = get_round_count(nb_players_start)
+        structure_index = upgrade_round_count(structure_index, standing.tables)
         standing.rounds_day1 = round_structures[structure_index][0]
         standing.rounds_day2 = round_structures[structure_index][0] + round_structures[structure_index][1]
         standing.rounds_cut = round_structures[structure_index][2]
