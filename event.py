@@ -70,9 +70,9 @@ class Event:
             },
             'tournamentStructure': {
                 div: {
-                    'swiss_day_1': self.divisions[div].standing.rounds_day1,
-                    'swiss_day_2': self.divisions[div].standing.rounds_day2 - self.divisions[div].standing.rounds_day1,
-                    'top_cut': self.divisions[div].standing.rounds_cut
+                    'swissDay1': self.divisions[div].standing.rounds_day1,
+                    'swissDay2': self.divisions[div].standing.rounds_day2 - self.divisions[div].standing.rounds_day1,
+                    'topCut': self.divisions[div].standing.rounds_cut
                 } for div in ['juniors', 'seniors', 'masters']
             },
             'pointsAwards': {
