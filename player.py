@@ -242,28 +242,28 @@ class Player:
                 'oppopp': self.oppopp_win_percentage
             },
             'drop': self.drop_round,
-            'rounds': {
-                current_round: {
-                    'id': getattr(self.matches[current_round - 1].player, 'id', 0),
-                    'name': getattr(self.matches[current_round - 1].player, 'name', 'LATE'),
-                    'result': self.matches[current_round - 1].status,
-                    'table': int(self.matches[current_round - 1].table),
+            'rounds': [
+                {
+                    'id': getattr(match.player, 'id', 0),
+                    'name': getattr(match.player, 'name', 'LATE'),
+                    'result': match.status,
+                    'table': int(match.table),
                     'record': next(({
                         'wins': x.wins,
                         'losses': x.losses,
                         'ties': x.ties,
-                    } for x in players if x.id == getattr(self.matches[current_round - 1].player, 'id', 0)), None)
-                } for current_round in range(1, len(self.matches) + 1)
-            }
+                    } for x in players if x.id == getattr(match.player, 'id', 0)), None)
+                } for match in self.matches
+            ]
         }
 
         if teams is not None:
             result['team'] = teams[f'{self.id}']['team']
             result['paste'] = teams[f'{self.id}']['paste']
-            for i in result['rounds']:
-                if result['rounds'][i]['id'] != 0:
-                    result['rounds'][i]['team'] = teams[f"{result['rounds'][i]['id']}"]['team']
-                    result['rounds'][i]['paste'] = teams[f"{result['rounds'][i]['id']}"]['paste']
+            for match in result['rounds']:
+                if match['id'] != 0:
+                    match['team'] = teams[f"{match['id']}"]['team']
+                    match['paste'] = teams[f"{match['id']}"]['paste']
 
         return result
 
