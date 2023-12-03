@@ -1,36 +1,14 @@
 from datetime import datetime, timezone
 import json
-import math
 import re
 import argparse
 import os
 
 from bs4 import BeautifulSoup
-import unicodedata
 import requests
 
 from player import Player
 from event import Event
-
-
-def remove_country(name):
-    start = name.find(' [')
-    stop = name.find(']')
-    if stop - start == 4:
-        return name[0:start]
-    return name
-
-
-# removing accents (for js calls)
-def strip_accents(input_str):
-    nfkd_form = unicodedata.normalize('NFKD', input_str)
-    only_ascii = nfkd_form.encode('ASCII', 'ignore')
-    return only_ascii
-
-
-# points access for sorting function
-def points(elem):
-    return elem.points
 
 
 round_structures = [
@@ -46,29 +24,25 @@ round_structures = [
 ]
 
 
-def get_round_count(players):
-    if 4 <= players <= 8:
-        return 0
-    elif players <= 12:
-        return 1
+def get_round_count(players, tables):
+    index = 0
+    if 8 < players <= 12:
+        index = 1
     elif players <= 20:
-        return 2
+        index = 2
     elif players <= 32:
-        return 3
+        index = 3
     elif players <= 64:
-        return 4
+        index = 4
     elif players <= 128:
-        return 5
+        index = 5
     elif players <= 226:
-        return 6
+        index = 6
     elif players <= 799:
-        return 7
-    else:
-        return 8
+        index = 7
+    elif players >= 800:
+        index = 8
 
-
-def upgrade_round_count(old_index, tables):
-    index = old_index
     if index == 0:
         if len(tables) > 3:
             index = 1
@@ -94,28 +68,6 @@ def upgrade_round_count(old_index, tables):
         if len(tables[15]) > 4:
             index = 8
     return index
-
-
-def apply_points(players, is_internats):
-    cutoff = 8
-    if is_internats and len(players) > 2046:
-        cutoff = 1024
-    elif len(players) > 1024:
-        cutoff = 512
-    elif len(players) > 512:
-        cutoff = 256
-    elif len(players) > 256:
-        cutoff = 128
-    elif len(players) > 128:
-        cutoff = 64
-    elif len(players) > 80:
-        cutoff = 32
-    elif len(players) > 48:
-        cutoff = 16
-
-    for player in players:
-        if player.top_placement <= cutoff:
-            player.awards_placement = 2 ** math.ceil(math.log2(player.top_placement))
 
 
 def parse_rk9_date_range(input_str):
@@ -268,8 +220,7 @@ def main_worker(directory, link, output_dir):
                     standing.player_id = standing.player_id + 1
                     if iRounds == 0:
                         p1 = Player(player1_name, division_name, standing.player_id, p1late)
-                        if p1.name in standing.dqed or (
-                                len(published_standings[division_name]) > 0 and
+                        if (len(published_standings[division_name]) > 0 and
                                 p1.name not in published_standings[division_name]):
                             p1.dqed = True
                         tour_players.append(p1)
@@ -288,8 +239,7 @@ def main_worker(directory, link, output_dir):
                     standing.player_id = standing.player_id + 1
                     if iRounds == 0:
                         p2 = Player(player2_name, division_name, standing.player_id, p2late)
-                        if p2.name in standing.dqed or (
-                                len(published_standings[division_name]) > 0 and
+                        if (len(published_standings[division_name]) > 0 and
                                 p2.name not in published_standings[division_name]):
                             p2.dqed = True
                         tour_players.append(p2)
@@ -327,8 +277,7 @@ def main_worker(directory, link, output_dir):
 
         # This could/should be handled within the Division object
         nb_players_start = len(tour_players) - len([entry for entry in filter(lambda p: p.late, tour_players)])
-        structure_index = get_round_count(nb_players_start)
-        structure_index = upgrade_round_count(structure_index, standing.tables)
+        structure_index = get_round_count(nb_players_start, standing.tables)
         print(round_structures[structure_index], [len(round_tables) for round_tables in standing.tables])
         standing.rounds_day1 = round_structures[structure_index][0]
         standing.rounds_day2 = round_structures[structure_index][0] + round_structures[structure_index][1]
@@ -450,7 +399,7 @@ def main_worker(directory, link, output_dir):
 
             if current_round >= standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
                 winner = tour_players[0]
-                apply_points(tour_players, "International Championship" in tour_data.name)
+                division.apply_points("International Championship" in tour_data.name)
 
         if len(tour_players) > 0:
             tour_data.tournament_status = "running"

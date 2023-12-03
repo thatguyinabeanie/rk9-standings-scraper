@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import json
+import math
 
 from standing import Standing
 
@@ -10,6 +11,27 @@ class Division:
         self.winner = None
         self.round_number = 0
         self.standing = Standing()
+
+    def apply_points(self, is_internats):
+        cutoff = 8
+        if is_internats and len(self.standing.players) > 2046:
+            cutoff = 1024
+        elif len(self.standing.players) > 1024:
+            cutoff = 512
+        elif len(self.standing.players) > 512:
+            cutoff = 256
+        elif len(self.standing.players) > 256:
+            cutoff = 128
+        elif len(self.standing.players) > 128:
+            cutoff = 64
+        elif len(self.standing.players) > 80:
+            cutoff = 32
+        elif len(self.standing.players) > 48:
+            cutoff = 16
+
+        for player in self.standing.players:
+            if player.top_placement <= cutoff:
+                player.awards_placement = 2 ** math.ceil(math.log2(player.top_placement))
 
 
 class Event:
