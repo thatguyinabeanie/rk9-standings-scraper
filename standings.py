@@ -73,7 +73,7 @@ def upgrade_round_count(old_index, tables):
         if len(tables) > 3:
             index = 1
     if index == 1:
-        if len(tables) > 4:
+        if len(tables[4]) > 2:
             index = 2
     if index == 2:
         if len(tables[5]) > 2:
@@ -91,11 +91,8 @@ def upgrade_round_count(old_index, tables):
         if len(tables[8]) > 4:
             index = 7
     if index == 7:
-        if len(tables[9]) > 4:
+        if len(tables[15]) > 4:
             index = 8
-    if index == 8:
-        if len(tables[14]) > 4:
-            index = 9
     return index
 
 
@@ -332,6 +329,7 @@ def main_worker(directory, link, output_dir):
         nb_players_start = len(tour_players) - len([entry for entry in filter(lambda p: p.late, tour_players)])
         structure_index = get_round_count(nb_players_start)
         structure_index = upgrade_round_count(structure_index, standing.tables)
+        print(round_structures[structure_index], [len(round_tables) for round_tables in standing.tables])
         standing.rounds_day1 = round_structures[structure_index][0]
         standing.rounds_day2 = round_structures[structure_index][0] + round_structures[structure_index][1]
         standing.rounds_cut = round_structures[structure_index][2]
