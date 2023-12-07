@@ -297,6 +297,8 @@ def main_worker(directory, link, output_dir):
 
         winner = None
 
+        post_swiss_players = None
+        top_cut = None
         for (i, tables) in enumerate(standing.tables):
             current_round = i + 1
             players_dictionary = {}
@@ -306,6 +308,7 @@ def main_worker(directory, link, output_dir):
                     counter += 1
                 players_dictionary[f"{player.name}#{counter}"] = player
 
+            top_cut_round = None
             still_playing = 0
             for table in tables:
                 players = []
@@ -356,6 +359,22 @@ def main_worker(directory, link, output_dir):
                                             current_round > standing.rounds_day1,
                                             current_round > standing.rounds_day2, table['table'])
 
+                # add match to top cut if relevant
+                if current_round >= standing.rounds_day2:
+                    if top_cut_round is None:
+                        top_cut_round = []
+                    try:
+                        game_winner = [player['result'] for player in table['players']].index('W')
+                    except ValueError:
+                        game_winner = None
+                    match = {
+                        'players': [
+                            player[0] for player in players
+                        ],
+                        'winner': game_winner
+                    }
+                    top_cut_round.append(match)
+
             for player in tour_players:
                 if (len(player.matches) >= standing.rounds_day1) or standing.rounds_day1 > current_round:
                     player.update_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
@@ -399,6 +418,56 @@ def main_worker(directory, link, output_dir):
                                                 round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                                             place = place - 1
 
+            if current_round == standing.rounds_day2 and still_playing == 0:
+                post_swiss_players = [player for player in tour_players]
+
+            if current_round == standing.rounds_day2 + 1 and still_playing == 0:
+                top_cut = [[]]
+                for player in post_swiss_players:
+                    try:
+                        table = [match for match in top_cut_round if player in match['players']][0]
+                        top_cut[0].append({
+                            'players': [
+                                {
+                                    'name': player.name,
+                                    'id': player.id
+                                } for player in table['players']
+                            ],
+                            'winner': table['winner']
+                        })
+                        if len(top_cut[0]) == len(top_cut_round):
+                            break
+                    except IndexError:
+                        pass
+
+            if current_round >= standing.rounds_day2 + 2:
+                last_round = top_cut[-1]
+                this_round = []
+                this_round_ids = []
+                for table in last_round:
+                    # grab winner ID
+                    winner_id = table['players'][table['winner']]['id']
+                    # check we don't have them in this_round
+                    if winner_id in this_round_ids:
+                        break
+                    # find match they played in top_cut_round
+                    table = [match for match in top_cut_round if winner_id in
+                             [player.id for player in match['players']]
+                             ][0]
+                    # add match to this_round
+                    this_round.append({
+                        'players': [
+                            {
+                                'name': player.name,
+                                'id': player.id
+                            } for player in table['players']
+                        ],
+                        'winner': table['winner']
+                    })
+                    for playerId in [player.id for player in table['players']]:
+                        this_round_ids.append(playerId)
+                top_cut.append(this_round)
+
             if current_round >= standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
                 winner = tour_players[0]
                 division.apply_points("International Championship" in tour_data.name)
@@ -411,6 +480,10 @@ def main_worker(directory, link, output_dir):
                 tour_data.divisions[division_name].winner = winner.name
 
         tour_data.add_to_index(f"{output_dir}/tournaments.json")
+
+        if top_cut is not None:
+            with open(f"{standing_directory}/top-cut.json", 'w') as top_cut_export:
+                json.dump(top_cut, top_cut_export, separators=(',', ':'), ensure_ascii=False)
 
         with open(f"{standing_directory}/tables.csv", 'wb') as csvExport:
             for player in tour_players:
