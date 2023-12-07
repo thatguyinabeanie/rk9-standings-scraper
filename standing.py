@@ -1,9 +1,9 @@
 class Standing:
     def __init__(self):
         self.level = ""
-        self.rounds_day1 = 999
-        self.rounds_day2 = 999
-        self.rounds_cut = 999
+        self.rounds_day1 = None
+        self.rounds_day2 = None
+        self.rounds_cut = None
         self.players = []
         self.player_id = 1
         self.tables = []
