@@ -26,7 +26,9 @@ round_structures = [
 
 def get_round_count(players, tables):
     index = 0
-    if 8 < players <= 12:
+    if players <= 8:
+        pass
+    elif players <= 12:
         index = 1
     elif players <= 20:
         index = 2
