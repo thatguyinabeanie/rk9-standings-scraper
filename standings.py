@@ -532,7 +532,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     """exemple: (Barcelona)
-    id = '0000090'
+    id = 'special-barcelona'
     url = 'BA189xznzDvlCdfoQlBC'
     """
     os.makedirs(args.output_dir, exist_ok=True)
