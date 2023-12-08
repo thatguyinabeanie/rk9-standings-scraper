@@ -509,7 +509,10 @@ def main_worker(directory, link, output_dir):
 
         if top_cut is not None:
             with open(f"{standing_directory}/top-cut.json", 'w') as top_cut_export:
-                json.dump(top_cut, top_cut_export, separators=(',', ':'), ensure_ascii=False)
+                json.dump({
+                    'totalRounds': standing.rounds_cut,
+                    'rounds': top_cut
+                }, top_cut_export, separators=(',', ':'), ensure_ascii=False)
 
         with open(f"{standing_directory}/tables.csv", 'wb') as csvExport:
             for player in tour_players:
