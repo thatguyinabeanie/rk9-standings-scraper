@@ -11,6 +11,28 @@ from player import Player
 from event import Event
 
 
+def get_last_round(matches):
+    result = []
+    player_count = len(matches) * 2
+    for match in matches:
+        flip = False
+        for player in match:
+            if flip:
+                result.append((player_count*2 - player - 1, player))
+            else:
+                result.append((player, player_count*2 - player - 1))
+            flip = not flip
+    return result
+
+
+# returns a list of the higher ranked player in each match of the first round
+def single_elim_order(players):
+    matches = [(0,1)]
+    while len(matches) * 2 < players:
+        matches = get_last_round(matches)
+    return [min(match[0], match[1]) for match in matches]
+
+
 round_structures = [
     (3, 0, 0),
     (4, 0, 2),
@@ -297,7 +319,7 @@ def main_worker(directory, link, output_dir):
 
         winner = None
 
-        post_swiss_players = None
+        last_round_standings = None
         top_cut = None
         for (i, tables) in enumerate(standing.tables):
             current_round = i + 1
@@ -413,17 +435,19 @@ def main_worker(directory, link, output_dir):
                                             tour_players[above].top_placement = tour_players[place].top_placement
                                             tour_players[place].top_placement = temp_placement
                                             tour_players.sort(key=lambda p: (
-                                                not p.dqed, len(tour_players) - p.top_placement - 1, p.points,
+                                                len(tour_players) - p.top_placement - 1, p.points,
                                                 not p.late, round(p.opp_win_percentage * 100, 2),
                                                 round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                                             place = place - 1
 
             if current_round == standing.rounds_day2 and still_playing == 0:
-                post_swiss_players = [player for player in tour_players]
+                last_round_standings = [player for player in tour_players]
 
-            if current_round == standing.rounds_day2 + 1 and still_playing == 0:
+            if current_round == standing.rounds_day2 + 1:
                 top_cut = [[]]
-                for player in post_swiss_players:
+                match_order = single_elim_order(2 ** standing.rounds_cut)
+                for player_index in match_order:
+                    player = last_round_standings[player_index]
                     try:
                         table = [match for match in top_cut_round if player in match['players']][0]
                         top_cut[0].append({
@@ -449,7 +473,7 @@ def main_worker(directory, link, output_dir):
                     winner_id = table['players'][table['winner']]['id']
                     # check we don't have them in this_round
                     if winner_id in this_round_ids:
-                        break
+                        continue
                     # find match they played in top_cut_round
                     table = [match for match in top_cut_round if winner_id in
                              [player.id for player in match['players']]
@@ -471,6 +495,8 @@ def main_worker(directory, link, output_dir):
             if current_round >= standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
                 winner = tour_players[0]
                 division.apply_points("International Championship" in tour_data.name)
+
+        tour_players.sort(key=lambda p: p.dqed)
 
         if len(tour_players) > 0:
             tour_data.tournament_status = "running"
