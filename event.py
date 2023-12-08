@@ -33,6 +33,10 @@ class Division:
             if player.top_placement <= cutoff:
                 player.awards_placement = 2 ** math.ceil(math.log2(player.top_placement))
 
+    def get_day_2_rounds(self):
+        if self.standing.rounds_day2 is None:
+            return 0
+        return self.standing.rounds_day2 - self.standing.rounds_day1
 
 class Event:
     def __init__(self, event_id, name, start_date, end_date, rk9_id):
@@ -58,25 +62,19 @@ class Event:
                 'end': self.date_end
             },
             'players': {
-                'juniors': self.divisions['juniors'].player_count,
-                'seniors': self.divisions['seniors'].player_count,
-                'masters': self.divisions['masters'].player_count
+                div: self.divisions[div].player_count for div in ['juniors', 'seniors', 'masters']
             },
             'winners': {
-                'juniors': self.divisions['juniors'].winner,
-                'seniors': self.divisions['seniors'].winner,
-                'masters': self.divisions['masters'].winner
+                div: self.divisions[div].winner for div in ['juniors', 'seniors', 'masters']
             },
             'tournamentStatus': self.tournament_status,
             'roundNumbers': {
-                'juniors': self.divisions['juniors'].round_number,
-                'seniors': self.divisions['seniors'].round_number,
-                'masters': self.divisions['masters'].round_number
+                div: self.divisions[div].round_number for div in ['juniors', 'seniors', 'masters']
             },
             'tournamentStructure': {
                 div: {
                     'swissDay1': self.divisions[div].standing.rounds_day1,
-                    'swissDay2': self.divisions[div].standing.rounds_day2 - self.divisions[div].standing.rounds_day1,
+                    'swissDay2': self.divisions[div].get_day_2_rounds(),
                     'topCut': self.divisions[div].standing.rounds_cut
                 } for div in ['juniors', 'seniors', 'masters']
             },
