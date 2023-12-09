@@ -296,7 +296,7 @@ def main_worker(directory, link, output_dir):
         with open(f"{standing_directory}/players.json",
                   'w') as jsonPlayers:
             json.dump({
-                'players': [{'id': str(player.id), 'name': player.name} for player in tour_players]
+                player.id: {'name': player.name} for player in tour_players
             }, jsonPlayers, separators=(',', ':'), ensure_ascii=False)
 
         # This could/should be handled within the Division object
