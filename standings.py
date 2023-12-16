@@ -77,7 +77,7 @@ def get_round_count(players, tables):
         if len(tables) > 5 and len(tables[5]) > 2:
             index = 3
     if index == 3:
-        if len(tables[5]) > 4:
+        if len(tables) > 5 and len(tables[5]) > 4:
             index = 4
     if index == 4:
         if len(tables) > 6 and len(tables[6]) > 4:
