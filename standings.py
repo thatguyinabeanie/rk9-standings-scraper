@@ -27,7 +27,7 @@ def get_last_round(matches):
 
 # returns a list of the higher ranked player in each match of the first round
 def single_elim_order(players):
-    matches = [(0,1)]
+    matches = [(0, 1)]
     while len(matches) * 2 < players:
         matches = get_last_round(matches)
     return [min(match[0], match[1]) for match in matches]
