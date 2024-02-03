@@ -203,7 +203,7 @@ def main_worker(directory, link, output_dir):
                 text_data = player_data.text.split('\n')
                 name = player_data.find('span', attrs={'class': 'name'})
                 if name:
-                    score = text_data[3].strip().replace('(', '').replace(')', '')
+                    score = re.sub('\).*', '', name.next_sibling.text.strip().replace('(', ''))
                     scores1 = list(map(int, re.split('-', score)))
                     player1_name = re.sub(r'\s+', ' ', name.text)
                     pdata_text = str(player_data)
@@ -225,7 +225,7 @@ def main_worker(directory, link, output_dir):
                 text_data = player_data.text.split('\n')
                 name = player_data.find('span', attrs={'class': 'name'})
                 if name:
-                    score = text_data[3].strip().replace('(', '').replace(')', '')
+                    score = re.sub('\).*', '', name.next_sibling.text.strip().replace('(', ''))
                     scores2 = list(map(int, re.split('-', score)))
                     player2_name = re.sub(r'\s+', ' ', name.text)
                     pdata_text = str(player_data)
