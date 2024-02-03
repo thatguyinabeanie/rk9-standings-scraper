@@ -157,7 +157,7 @@ def main_worker(directory, link, output_dir):
                         rounds_from_url = int(sp[len(sp) - 1])
                         standing.level = str(aria['aria-controls'])
 
-        rounds_data = soup.find_all("div", id=lambda value: value and value.startswith(standing.level + "R"))
+        #rounds_data = soup.find_all("div", id=lambda value: value and value.startswith(standing.level + "R"))
 
         standing_published_data = soup.find('div', attrs={'id': standing.level + "-standings"})
         published_standings[division_name] = []
@@ -174,7 +174,11 @@ def main_worker(directory, link, output_dir):
 
         for iRounds in range(rounds_from_url):
             tables = []
-            round_data = rounds_data[iRounds]
+            #round_data = rounds_data[iRounds]
+            round_url = f"https://rk9.gg/pairings/{link}?pod={standing.level.replace('P', '')}&rnd={iRounds + 1}"
+            with requests.Session() as s:
+                page = s.get(round_url)
+            round_data = BeautifulSoup(page.content, 'lxml')
             matches = round_data.find_all('div', attrs={'class': 'match'})
             for match_data in matches:
                 player1_name = ""
@@ -566,3 +570,4 @@ if __name__ == "__main__":
     """
     os.makedirs(args.output_dir, exist_ok=True)
     main_worker(args.id, args.url, args.output_dir)
+
