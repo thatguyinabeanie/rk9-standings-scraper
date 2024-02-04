@@ -162,15 +162,7 @@ def main_worker(directory, link, output_dir):
         standing_published_data = soup.find('div', attrs={'id': standing.level + "-standings"})
         published_standings[division_name] = []
         if standing_published_data:
-            standing_published = [y for y in [x.strip() for x in standing_published_data.text.split('\n')] if y]
-            for line in standing_published:
-                data = line.split(' ')
-                player = ''
-                for i in range(1, len(data)):
-                    if i > 1:
-                        player += ' '
-                    player += data[i]
-                published_standings[division_name].append(player.replace('  ', ' '))
+            published_standings[division_name] = [re.sub('\d+\.', '', child.string).strip() for child in standing_published_data.children if child.string is not None]
 
         for iRounds in range(rounds_from_url):
             tables = []
