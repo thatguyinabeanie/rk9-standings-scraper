@@ -280,6 +280,9 @@ def main_worker(directory, link, output_dir):
                         'players': table_players
                     })
 
+                if len(table_players) == 1 and table_players[0]['result'] is None:
+                    table_players[0]['result'] = 'L'
+
             standing.tables.append(tables)
 
         standing_directory = f'{output_dir}/{tour_data.event_id}/{division_name}'
@@ -366,7 +369,7 @@ def main_worker(directory, link, output_dir):
                                 break
                     players.append((match, player['result'], player['dropped']))
 
-                if len(players) == 1:
+                if len(players) == 1 and players[0][0] is not None:
                     players[0][0].add_match(None, players[0][1], players[0][2], current_round > standing.rounds_day1,
                                             current_round > standing.rounds_day2, table['table'])
                 elif len(players) == 2:
