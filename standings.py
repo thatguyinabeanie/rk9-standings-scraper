@@ -26,6 +26,7 @@ def get_last_round(matches):
 
 
 # returns a list of the higher ranked player in each match of the first round
+# used to determine bracket seeding
 def single_elim_order(players):
     matches = [(0, 1)]
     while len(matches) * 2 < players:
@@ -157,8 +158,6 @@ def main_worker(directory, link, output_dir):
                         rounds_from_url = int(sp[len(sp) - 1])
                         standing.level = str(aria['aria-controls'])
 
-        #rounds_data = soup.find_all("div", id=lambda value: value and value.startswith(standing.level + "R"))
-
         standing_published_data = soup.find('div', attrs={'id': standing.level + "-standings"})
         published_standings[division_name] = []
         if standing_published_data:
@@ -166,7 +165,6 @@ def main_worker(directory, link, output_dir):
 
         for iRounds in range(rounds_from_url):
             tables = []
-            #round_data = rounds_data[iRounds]
             round_url = f"https://rk9.gg/pairings/{link}?pod={standing.level.replace('P', '')}&rnd={iRounds + 1}"
             with requests.Session() as s:
                 page = s.get(round_url)
@@ -192,7 +190,6 @@ def main_worker(directory, link, output_dir):
                         table = table_data.text
 
                 player_data = match_data.find('div', attrs={'class': 'player1'})
-                text_data = player_data.text.split('\n')
                 name = player_data.find('span', attrs={'class': 'name'})
                 if name:
                     score = re.sub('\).*', '', name.next_sibling.text.strip().replace('(', ''))
@@ -214,7 +211,6 @@ def main_worker(directory, link, output_dir):
                                 p1late = True
 
                 player_data = match_data.find('div', attrs={'class': 'player2'})
-                text_data = player_data.text.split('\n')
                 name = player_data.find('span', attrs={'class': 'name'})
                 if name:
                     score = re.sub('\).*', '', name.next_sibling.text.strip().replace('(', ''))
@@ -565,4 +561,3 @@ if __name__ == "__main__":
     """
     os.makedirs(args.output_dir, exist_ok=True)
     main_worker(args.id, args.url, args.output_dir)
-

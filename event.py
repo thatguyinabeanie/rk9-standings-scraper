@@ -38,6 +38,7 @@ class Division:
             return 0
         return self.standing.rounds_day2 - self.standing.rounds_day1
 
+
 class Event:
     def __init__(self, event_id, name, start_date, end_date, rk9_id):
         self.event_id = event_id
