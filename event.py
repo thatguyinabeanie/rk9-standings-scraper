@@ -10,7 +10,12 @@ class Division:
         self.player_count = 0
         self.winner = None
         self.round_number = 0
-        self.standing = Standing()
+        self.standing = Standing([], [])
+
+    def load_data(self, players, tables):
+        self.standing = Standing(players, tables)
+        self.round_number = len(tables)
+        self.player_count = len(players)
 
     def apply_points(self, is_internats):
         cutoff = 8
@@ -47,12 +52,24 @@ class Event:
         self.date_end = end_date
         self.last_updated = datetime.now(timezone.utc).isoformat()
         self.rk9_id = rk9_id
-        self.tournament_status = 'not-started'
         self.divisions = {
             'juniors': Division(),
             'seniors': Division(),
             'masters': Division()
         }
+
+    def get_tournament_status(self):
+        if (self.divisions['juniors'].winner is not None
+                and self.divisions['seniors'].winner is not None
+                and self.divisions['masters'].winner is not None):
+            return 'finished'
+
+        if (self.divisions['juniors'].player_count > 0
+                or self.divisions['seniors'].player_count > 0
+                or self.divisions['masters'].player_count > 0):
+            return 'in-progress'
+
+        return 'not-started'
 
     def to_dict(self):
         return {
@@ -68,7 +85,7 @@ class Event:
             'winners': {
                 div: self.divisions[div].winner for div in ['juniors', 'seniors', 'masters']
             },
-            'tournamentStatus': self.tournament_status,
+            'tournamentStatus': self.get_tournament_status(),
             'roundNumbers': {
                 div: self.divisions[div].round_number for div in ['juniors', 'seniors', 'masters']
             },

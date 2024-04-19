@@ -10,7 +10,7 @@ class Match:
 class Player:
     # player constructor
     # (name, level[junior, senior, master], id [unique number, incremental], late [0 if not, -1 if late])
-    def __init__(self, name, level, player_id, late):
+    def __init__(self, name, level, player_id, late, dqed):
         self.name = name
         self.level = level
 
@@ -64,7 +64,7 @@ class Player:
         self.late = late
 
         # dqed flag : manually added if known, or if player is not in the final published standings
-        self.dqed = False
+        self.dqed = dqed
 
         # country extraction ISO 3166-1 alpha-2 (2 letters)
         if self.name[len(self.name) - 1] == ']':
@@ -84,7 +84,7 @@ class Player:
         if status == 'L':
             if player is None:
                 # player is late
-                player = Player("LATE", "none", 0, 0)
+                player = Player("LATE", "none", 0, 0, False)
             self.losses += 1
             if is_day2 and not is_top:
                 # day 2 swiss
@@ -99,7 +99,7 @@ class Player:
         if status == 'W':
             if player is None:
                 # player got a bye
-                player = Player("BYE", "none", 0, 0)
+                player = Player("BYE", "none", 0, 0, False)
             self.wins += 1
             if is_day2 and not is_top:
                 # day 2 swiss
