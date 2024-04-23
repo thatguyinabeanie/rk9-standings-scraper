@@ -138,7 +138,7 @@ class Player:
                 val = val / count
             if val < 0.25:
                 val = 0.25
-            if self.drop_round > 0 and self.drop_round != day1_rounds and self.drop_round != day2_rounds and not self.dqed:
+            if self.drop_round > 0 and self.drop_round != day1_rounds and self.drop_round != day2_rounds:
                 if val > 0.75:
                     val = 0.75
             self.win_percentage = val
