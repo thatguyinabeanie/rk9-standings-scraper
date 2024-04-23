@@ -36,7 +36,6 @@ def parse_rk9_date_range(input_str):
 def table_scraper(link, division_name, pod, rounds_no, published_standings):
     round_tables = []
     last_player_id = 1
-    player_list = []
     player_dict = {}
     for iRounds in range(rounds_no):
         tables = []
@@ -46,18 +45,6 @@ def table_scraper(link, division_name, pod, rounds_no, published_standings):
         round_data = BeautifulSoup(page.content, 'lxml')
         matches = round_data.find_all('div', attrs={'class': 'match'})
         for match_data in matches:
-            player1_name = ""
-            player2_name = ""
-            p1status = -1
-            p2status = -1
-            p1dropped = False
-            p2dropped = False
-            p1late = 0
-            p2late = 0
-            p1dqed = False
-            p2dqed = False
-            scores1 = []
-            scores2 = []
             table = "0"
 
             table_data = match_data.find('div', attrs={'class': 'col-2'})
@@ -66,88 +53,54 @@ def table_scraper(link, division_name, pod, rounds_no, published_standings):
                 if table_data:
                     table = table_data.text
 
-            player_data = match_data.find('div', attrs={'class': 'player1'})
-            name = player_data.find('span', attrs={'class': 'name'})
-            if name:
-                score = re.sub(r'\).*', '', name.next_sibling.text.strip().replace('(', ''))
-                scores1 = list(map(int, re.split('-', score)))
-                player1_name = re.sub(r'\s+', ' ', name.text)
-                pdata_text = str(player_data)
-                if pdata_text.find(" winner") != -1:
-                    p1status = 2
-                elif pdata_text.find(" loser") != -1:
-                    p1status = 0
-                elif pdata_text.find(" tie") != -1:
-                    p1status = 1
-                if pdata_text.find(" dropped") != -1:
-                    p1dropped = True
-                if p1status == -1 and not p1dropped:
-                    if iRounds + 1 < rounds_no:
-                        p1status = 0
-                        if iRounds == 0:
-                            p1late = True
-
-            player_data = match_data.find('div', attrs={'class': 'player2'})
-            name = player_data.find('span', attrs={'class': 'name'})
-            if name:
-                score = re.sub(r'\).*', '', name.next_sibling.text.strip().replace('(', ''))
-                scores2 = list(map(int, re.split('-', score)))
-                player2_name = re.sub(r'\s+', ' ', name.text)
-                pdata_text = str(player_data)
-                if pdata_text.find(" winner") != -1:
-                    p2status = 2
-                elif pdata_text.find(" loser") != -1:
-                    p2status = 0
-                elif pdata_text.find(" tie") != -1:
-                    p2status = 1
-                if pdata_text.find(" dropped") != -1:
-                    p2dropped = True
-                if p2status == -1 and not p2dropped:
-                    if iRounds + 1 < rounds_no:
-                        p2status = 0
-                        if iRounds == 0:
-                            p2late = True
-
+            players_data = [
+                match_data.find('div', attrs={'class': 'player1'}),
+                match_data.find('div', attrs={'class': 'player2'})
+            ]
             table_players = []
-            if len(player1_name) > 0:
-                if iRounds == 0:
-                    last_player_id = last_player_id + 1
-                    p1dqed = len(published_standings) > 0 and player1_name not in published_standings
-                    player_dict[last_player_id] = {
-                        'name': player1_name,
-                        'division': division_name,
-                        'late': p1late,
-                        'dqed': p1dqed
-                    }
-                table_players.append({
-                    'name': player1_name,
-                    'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[p1status],
-                    'dropped': p1dropped,
-                    'record': {
-                        'wins': scores1[0],
-                        'losses': scores1[1],
-                        'ties': scores1[2]
-                    }
-                })
 
-            if len(player2_name) > 0:
+            for player_data in players_data:
+                contents = player_data.find('span', attrs={'class': 'name'})
+                if not contents:
+                    continue
+                score_string = re.sub(r'\).*', '', contents.next_sibling.text.strip().replace('(', ''))
+                score = list(map(int, re.split('-', score_string)))
+                name = re.sub(r'\s+', ' ', contents.text)
+                data_text = str(player_data)
+                status = None
+                dropped = False
+                late = False
+                if data_text.find(" winner") != -1:
+                    status = 'W'
+                elif data_text.find(" loser") != -1:
+                    status = 'L'
+                elif data_text.find(" tie") != -1:
+                    status = 'T'
+                if data_text.find(" dropped") != -1:
+                    dropped = True
+                if status is None and not dropped:
+                    if iRounds + 1 < rounds_no:
+                        status = 'L'
+                        if iRounds == 0:
+                            late = True
+
                 if iRounds == 0:
                     last_player_id = last_player_id + 1
-                    p2dqed = len(published_standings) > 0 and player2_name not in published_standings
+                    dqed = len(published_standings) > 0 and name not in published_standings
                     player_dict[last_player_id] = {
-                        'name': player2_name,
+                        'name': name,
                         'division': division_name,
-                        'late': p2late,
-                        'dqed': p2dqed
+                        'late': late,
+                        'dqed': dqed
                     }
                 table_players.append({
-                    'name': player2_name,
-                    'result': {-1: None, 0: 'L', 1: 'T', 2: 'W'}[p2status],
-                    'dropped': p2dropped,
+                    'name': name,
+                    'result': status,
+                    'dropped': dropped,
                     'record': {
-                        'wins': scores2[0],
-                        'losses': scores2[1],
-                        'ties': scores2[2]
+                        'wins': score[0],
+                        'losses': score[1],
+                        'ties': score[2]
                     }
                 })
 
