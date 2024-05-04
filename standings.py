@@ -42,12 +42,15 @@ def main_worker(directory, output_dir):
         os.makedirs(f'{standing_directory}/players', exist_ok=True)
 
         division = tour_data.divisions[division_name]
-        with (open(f"{standing_directory}/tables.json", 'r') as tables_file,
-              open(f"{standing_directory}/players.json", 'r') as players_file):
-            division.load_data(
-                [Player(player['name'], player['division'], int(player_id), player['late'], player['dqed'])
-                 for player_id, player in json.load(players_file).items()],
-                json.load(tables_file))
+        try:
+            with (open(f"{standing_directory}/tables.json", 'r') as tables_file,
+                  open(f"{standing_directory}/players.json", 'r') as players_file):
+                division.load_data(
+                    [Player(player['name'], player['division'], int(player_id), player['late'], player['dqed'])
+                     for player_id, player in json.load(players_file).items()],
+                    json.load(tables_file))
+        except FileNotFoundError:
+            continue
 
         try:
             with open(f"{standing_directory}/published_standings.txt") as pub_standings_file:
