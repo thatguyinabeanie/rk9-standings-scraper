@@ -177,7 +177,7 @@ def main_worker(directory, link, output_dir):
                 'start': dates[0],
                 'end': dates[1]
             },
-            'rk9link': link
+            'playlatamlink': link
         }, tournament_export, separators=(',', ':'), ensure_ascii=False)
 
     print('scrape end : ' + datetime.now().strftime("%Y/%m/%d - %H:%M:%S"))
