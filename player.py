@@ -225,7 +225,32 @@ class Player:
             current_round += 1
 
     # toJson
-    def to_json(self, players, teams):
+    def to_json(self, players, standing, teams):
+        matches = [
+            {
+                'id': getattr(match.player, 'id', 0),
+                'result': match.status,
+                'table': int(match.table)
+            } for match in self.matches
+        ]
+        round_sets = []
+        round_sets.append({
+            'name': 'Swiss' if standing.rounds_day2 == standing.rounds_day1 else 'Day 1 Swiss',
+            'rounds': matches[:standing.rounds_day1]
+        })
+
+        if standing.rounds_day2 > standing.rounds_day1 and len(matches) > standing.rounds_day1:
+            round_sets.append({
+                'name': 'Day 2 Swiss',
+                'rounds': matches[standing.rounds_day1:standing.rounds_day2]
+            })
+
+        if standing.rounds_cut != 0 and len(matches) > standing.rounds_day2:
+            round_sets.append({
+                'name': 'Top Cut',
+                'rounds': matches[standing.rounds_day2:]
+            })
+
         result = {
             'id': self.id,
             'name': self.name,
@@ -242,28 +267,12 @@ class Player:
                 'oppopp': self.oppopp_win_percentage
             },
             'drop': self.drop_round,
-            'rounds': [
-                {
-                    'id': getattr(match.player, 'id', 0),
-                    'name': getattr(match.player, 'name', 'LATE'),
-                    'result': match.status,
-                    'table': int(match.table),
-                    'record': next(({
-                        'wins': x.wins,
-                        'losses': x.losses,
-                        'ties': x.ties,
-                    } for x in players if x.id == getattr(match.player, 'id', 0)), None)
-                } for match in self.matches
-            ]
+            'rounds': round_sets
         }
 
         if teams is not None:
-            result['team'] = teams[f'{self.id}']['team']
+            result['team'] = teams[f'{self.id}']['fullTeam']
             result['paste'] = teams[f'{self.id}']['paste']
-            for match in result['rounds']:
-                if match['id'] != 0:
-                    match['team'] = teams[f"{match['id']}"]['team']
-                    match['paste'] = teams[f"{match['id']}"]['paste']
 
         return result
 

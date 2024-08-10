@@ -45,13 +45,14 @@ class Division:
 
 
 class Event:
-    def __init__(self, event_id, name, start_date, end_date, rk9_id):
+    def __init__(self, event_id, name, start_date, end_date, rk9_id, season):
         self.event_id = event_id
         self.name = name
         self.date_start = start_date
         self.date_end = end_date
         self.last_updated = datetime.now(timezone.utc).isoformat()
         self.rk9_id = rk9_id
+        self.season = season
         self.divisions = {
             'juniors': Division(),
             'seniors': Division(),
@@ -98,6 +99,7 @@ class Event:
             },
             "lastUpdated": self.last_updated,
             "rk9link": self.rk9_id,
+            "season": self.season,
         }
 
     def add_to_index(self, index_filename):

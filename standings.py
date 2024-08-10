@@ -30,21 +30,21 @@ def single_elim_order(players):
     return [min(match[0], match[1]) for match in matches]
 
 
-def main_worker(directory, output_dir):
-    with open(f"{output_dir}/{directory}/tournament.json", "r") as tournament_export:
+def main_worker(directory, output_dir, input_dir, season):
+    with open(f"{input_dir}/{directory}/tournament.json", "r") as tournament_export:
         raw_tour = json.load(tournament_export)
         tour_data = Event(raw_tour['id'], raw_tour['name'], raw_tour['date']['start'], raw_tour['date']['end'],
-                          raw_tour['rk9link'])
+                          raw_tour['rk9link'], int(season))
 
     for division_name in tour_data.divisions:
         standing_directory = f'{output_dir}/{tour_data.event_id}/{division_name}'
+        standing_directory_in = f'{input_dir}/{tour_data.event_id}/{division_name}'
         os.makedirs(standing_directory, exist_ok=True)
-        os.makedirs(f'{standing_directory}/players', exist_ok=True)
 
         division = tour_data.divisions[division_name]
         try:
-            with (open(f"{standing_directory}/tables.json", 'r') as tables_file,
-                  open(f"{standing_directory}/players.json", 'r') as players_file):
+            with (open(f"{standing_directory_in}/tables.json", 'r') as tables_file,
+                  open(f"{standing_directory_in}/players.json", 'r') as players_file):
                 division.load_data(
                     [Player(player['name'], player['division'], int(player_id), player['late'], player['dqed'])
                      for player_id, player in json.load(players_file).items()],
@@ -53,7 +53,7 @@ def main_worker(directory, output_dir):
             continue
 
         try:
-            with open(f"{standing_directory}/published_standings.txt") as pub_standings_file:
+            with open(f"{standing_directory_in}/published_standings.txt") as pub_standings_file:
                 published_standings = [line.strip() for line in pub_standings_file.readlines()]
         except FileNotFoundError:
             published_standings = []
@@ -268,20 +268,20 @@ def main_worker(directory, output_dir):
 
         teams = None
         try:
-            with open(f"{standing_directory}/teams.json", 'r') as teams_file:
+            with open(f"{standing_directory_in}/teams.json", 'r') as teams_file:
                 teams = json.load(teams_file)
         except FileNotFoundError:
             # File is added by team scraping process (currently Flintstoned)
             pass
 
         with open(f"{standing_directory}/standings.json", 'w') as json_export:
-            json.dump(tour_players, json_export, default=lambda o: o.summary_json(teams), separators=(',', ':'),
-                      ensure_ascii=False)
+            json.dump([player.id for player in tour_players], json_export,
+                      separators=(',', ':'), ensure_ascii=False)
 
-        for player in tour_players:
-            with open(f'{standing_directory}/players/{player.id}.json', 'w') as json_export:
-                json.dump(player, json_export, default=lambda o: o.to_json(tour_players, teams),
-                          separators=(',', ':'), ensure_ascii=False)
+        with open(f'{standing_directory}/players.json', 'w') as json_export:
+            json.dump({player.id: player for player in tour_players},
+                    json_export, default=lambda o: o.to_json(tour_players, standing, teams),
+                    separators=(',', ':'), ensure_ascii=False)
 
         with open(f"{standing_directory}/discrepancy.txt", 'w') as discrepancy_report:
             if len(published_standings) > 0:
@@ -304,6 +304,8 @@ if __name__ == "__main__":
     parser.add_argument("--url")
     parser.add_argument("--id")
     parser.add_argument("--output-dir", help="output directory", default='.')
+    parser.add_argument("--input-dir", help="input directory", default='.')
+    parser.add_argument("--season", help="VGC season the tournament is for", default='2024')
 
     args = parser.parse_args()
 
@@ -312,4 +314,4 @@ if __name__ == "__main__":
     url = 'BA189xznzDvlCdfoQlBC'
     """
     os.makedirs(args.output_dir, exist_ok=True)
-    main_worker(args.id, args.output_dir)
+    main_worker(args.id, args.output_dir, args.input_dir, args.season)
