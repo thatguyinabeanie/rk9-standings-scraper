@@ -242,7 +242,8 @@ def main_worker(directory, output_dir, input_dir, season):
 
             if current_round >= standing.rounds_day2 + standing.rounds_cut and still_playing == 0:
                 winner = tour_players[0]
-                division.apply_points("International Championship" in tour_data.name)
+                if not ("World Championships" in tour_data.name):
+                    division.apply_points("International Championship" in tour_data.name)
 
         tour_players.sort(key=lambda p: p.dqed)
 
