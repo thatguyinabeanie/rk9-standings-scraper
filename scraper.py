@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 
 import requests
+import requests_cache
 from bs4 import BeautifulSoup
 
 
@@ -33,15 +34,19 @@ def parse_rk9_date_range(input_str):
     return start_date, end_date
 
 
-def table_scraper(link, division_name, pod, rounds_no, published_standings):
+def table_scraper(link, division_name, pod, rounds_no, published_standings, cached_session):
     round_tables = []
     last_player_id = 1
     player_dict = {}
     for iRounds in range(rounds_no):
         tables = []
         round_url = f"https://rk9.gg/pairings/{link}?pod={pod}&rnd={iRounds + 1}"
-        with requests.Session() as s:
-            page = s.get(round_url)
+        if iRounds >= rounds_no - 3:
+            print(f'Fetching: {round_url}')
+            page = requests.get(round_url)
+        else:
+            print(f'Fetching with cache: {round_url}')
+            page = cached_session.get(round_url)
         round_data = BeautifulSoup(page.content, 'lxml')
         matches = round_data.find_all('div', attrs={'class': 'match'})
         for match_data in matches:
@@ -120,10 +125,10 @@ def table_scraper(link, division_name, pod, rounds_no, published_standings):
     }
 
 
-def main_worker(directory, link, output_dir):
+def main_worker(directory, link, output_dir, cached_session):
     url = 'https://rk9.gg/tournament/' + link
-    print("Fetching: " + url)
-    page = requests.get(url)
+    print("Fetching with cache: " + url)
+    page = cached_session.get(url)
     soup = BeautifulSoup(page.content, "lxml")
 
     page_title = soup.find('h3', {'class': 'mb-0'}).text
@@ -155,7 +160,7 @@ def main_worker(directory, link, output_dir):
         if standing_published_data:
             published_standings = [re.sub(r'\d+\.', '', child.text).strip() for child in standing_published_data.children if child.text is not None]
 
-        scrape_results = table_scraper(link, division_name, pod, rounds_from_url, published_standings)
+        scrape_results = table_scraper(link, division_name, pod, rounds_from_url, published_standings, cached_session)
 
         standing_directory = f'{output_dir}/{directory}/{division_name}'
         os.makedirs(standing_directory, exist_ok=True)
@@ -200,4 +205,6 @@ if __name__ == "__main__":
     url = 'BA189xznzDvlCdfoQlBC'
     """
     os.makedirs(args.output_dir, exist_ok=True)
-    main_worker(args.id, args.url, args.output_dir)
+    with requests_cache.CachedSession() as cached_session:
+        main_worker(args.id, args.url, args.output_dir, cached_session)
+
