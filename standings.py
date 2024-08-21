@@ -193,24 +193,16 @@ def main_worker(directory, output_dir, input_dir, season):
 
             if current_round == standing.rounds_day2 + 1:
                 top_cut = [[]]
-                match_order = single_elim_order(2 ** standing.rounds_cut)
-                for player_index in match_order:
-                    player = last_round_standings[player_index]
-                    try:
-                        table = [match for match in top_cut_round if player in match['players']][0]
-                        top_cut[0].append({
-                            'players': [
-                                {
-                                    'name': player.name,
-                                    'id': player.id
-                                } for player in table['players']
-                            ],
-                            'winner': table['winner']
-                        })
-                        if len(top_cut[0]) == len(top_cut_round):
-                            break
-                    except IndexError:
-                        pass
+                for match in top_cut_round:
+                    top_cut[0].append({
+                        'players': [
+                            {
+                                'name': player.name,
+                                'id': player.id,
+                            } for player in match['players']
+                        ],
+                        'winner': match['winner']
+                    })
 
             if current_round >= standing.rounds_day2 + 2:
                 last_round = top_cut[-1]
