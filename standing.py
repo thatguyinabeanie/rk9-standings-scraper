@@ -1,6 +1,8 @@
 import math
 
 round_structures = [
+        (3, 0, False),
+        (4, 0, True),
         (6, 0, True),
         (7, 0, True),
         (6, 2, True),
@@ -16,20 +18,24 @@ round_structures = [
 def get_round_count(players, tables):
     index = 0
     if players > 4096:
-        index = 8
+        index = 10
     elif players > 2048:
-        index = 7
+        index = 9
     elif players > 1024:
-        index = 6
+        index = 8
     elif players > 512:
-        index = 5
+        index = 7
     elif players > 256:
-        index = 4
+        index = 6
     elif players > 128:
-        index = 3
+        index = 5
     elif players > 64:
-        index = 2
+        index = 4
     elif players > 32:
+        index = 3
+    elif players > 16:
+        index = 2
+    elif players > 8:
         index = 1
 
     (rounds_day1, rounds_day2, has_cut) = round_structures[index]
