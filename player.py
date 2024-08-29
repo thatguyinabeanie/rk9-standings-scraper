@@ -151,13 +151,11 @@ class Player:
             count = 0
             counter = 0
             for match in self.matches:
-                if (len(self.matches) >= day1_rounds and day1_rounds <= counter < day2_rounds) or len(
-                        self.matches) <= day1_rounds or day1_rounds == 0:
-                    if match.player is not None and not (match.player.id == 0):
-                        win_percentage = match.player.win_percentage
-                        if win_percentage > 0:
-                            val = val + win_percentage
-                            count = count + 1
+                if match.player is not None and not (match.player.id == 0):
+                    win_percentage = match.player.win_percentage
+                    if win_percentage > 0:
+                        val = val + win_percentage
+                        count = count + 1
                 counter = counter + 1
             if count > 0:
                 val = val / count
@@ -173,11 +171,9 @@ class Player:
             count = 0
             counter = 0
             for match in self.matches:
-                if (len(self.matches) >= day1_rounds and day1_rounds <= counter < day2_rounds) or len(
-                        self.matches) <= day1_rounds or day1_rounds == 0:
-                    if match.player is not None and not (match.player.id == 0):
-                        val = val + match.player.opp_win_percentage
-                        count = count + 1
+                if match.player is not None and not (match.player.id == 0):
+                    val = val + match.player.opp_win_percentage
+                    count = count + 1
                 counter = counter + 1
             if count > 0:
                 val = val / count
