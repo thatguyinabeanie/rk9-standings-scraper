@@ -69,11 +69,13 @@ def main_worker(directory, output_dir, input_dir, season):
         for (i, tables) in enumerate(standing.tables):
             current_round = i + 1
             players_dictionary = {}
+            matched_dictionary = {}
             for player in tour_players:
                 counter = 0
                 while f"{player.name}#{counter}" in players_dictionary:
                     counter += 1
                 players_dictionary[f"{player.name}#{counter}"] = player
+                matched_dictionary[f"{player.name}#{counter}"] = False
 
             top_cut_round = None
             still_playing = 0
@@ -87,11 +89,15 @@ def main_worker(directory, output_dir, input_dir, season):
                         result = []
                         counter = 0
                         while f"{player['name']}#{str(counter)}" in players_dictionary:
-                            result.append(players_dictionary[f"{player['name']}#{str(counter)}"])
+                            result.append([f"{player['name']}#{str(counter)}", players_dictionary[f"{player['name']}#{str(counter)}"]])
                             counter += 1
+                        result.reverse()
 
                         if len(result) > 0:
-                            for candidate in result:
+                            for [player_hash, candidate] in result:
+                                if matched_dictionary[player_hash] = True:
+                                    continue
+
                                 if player['result'] is None and (
                                         candidate.wins == player['record']['wins'] and
                                         candidate.losses == player['record']['losses'] and
@@ -115,6 +121,8 @@ def main_worker(directory, output_dir, input_dir, season):
                                     match = candidate
 
                                 if match:
+                                    matched_dictionary[player_hash] = Tru 
+                            result.append(players_dictionary[f"{player['name']}#{str(counter)}"])
                                     break
                     players.append((match, player['result'], player['dropped']))
 
@@ -146,14 +154,11 @@ def main_worker(directory, output_dir, input_dir, season):
                     top_cut_round.append(match)
 
             for player in tour_players:
-                if (len(player.matches) >= standing.rounds_day1) or standing.rounds_day1 > current_round:
-                    player.update_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
+                player.update_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
             for player in tour_players:
-                if (len(player.matches) >= standing.rounds_day1) or standing.rounds_day1 > current_round:
-                    player.update_opponent_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
+                player.update_opponent_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
             for player in tour_players:
-                if (len(player.matches) >= standing.rounds_day1) or standing.rounds_day1 > current_round:
-                    player.update_oppopp_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
+                player.update_oppopp_win_percentage(standing.rounds_day1, standing.rounds_day2, current_round)
 
             if current_round <= standing.rounds_day2:
                 tour_players.sort(key=lambda p: (
@@ -298,7 +303,7 @@ if __name__ == "__main__":
     parser.add_argument("--id")
     parser.add_argument("--output-dir", help="output directory", default='.')
     parser.add_argument("--input-dir", help="input directory", default='.')
-    parser.add_argument("--season", help="VGC season the tournament is for", default='2024')
+    parser.add_argument("--season", help="VGC season the tournament is for", default='2025')
 
     args = parser.parse_args()
 
@@ -308,3 +313,4 @@ if __name__ == "__main__":
     """
     os.makedirs(args.output_dir, exist_ok=True)
     main_worker(args.id, args.output_dir, args.input_dir, args.season)
+

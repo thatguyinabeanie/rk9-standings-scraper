@@ -116,70 +116,75 @@ class Player:
     # currentRound...
     # resistance is calculated every round
     def update_win_percentage(self, day1_rounds, day2_rounds, current_round):
-        if self.drop_round == -1 or self.drop_round == current_round:
-            self.win_percentage = 0
-            val = 0
-            count = 0
-            counter = 0
-            for match in self.matches:
-                if ((len(self.matches) >= day1_rounds and day1_rounds <= counter < day2_rounds)
-                        or len(self.matches) <= day1_rounds or day1_rounds == 0):
-                    if match.player is not None and not (match.player.name == "BYE"):
-                        if match.status == 'W':
-                            val = val + 1
-                        if match.status == 'T':
-                            val = val + 0.5
-                        if match.status == 'L':
-                            val = val + 0
-                        if match.status is not None:
-                            count = count + 1
-                counter = counter + 1
-            if count > 0:
-                val = val / count
-            if val < 0.25:
-                val = 0.25
-            if self.drop_round > 0 and self.drop_round != day1_rounds and self.drop_round != day2_rounds:
-                if val > 0.75:
-                    val = 0.75
-            self.win_percentage = val
+        if self.drop_round < current_round and self.drop_round != -1:
+            return
+
+        results = {
+            'W': 0,
+            'L': 0,
+            'T': 0
+        }
+        for match in self.matches[0:day2_rounds]:
+            if match.player.name == 'BYE':
+                continue
+            results[match.status] += 1
+
+        total = results['W'] + results['T'] + results['L']
+        if total == 0:
+            self.win_percentage = 0.25
+            return
+
+        raw_result = (results['W'] + (results['T'] / 2)) / total
+        result = max(0.25, raw_result)
+
+        if self.drop_round not in [-1, day1_rounds, day2_rounds]:
+            self.win_percentage = min(0.75, result)
+            return
+
+        self.win_percentage = result
 
     # same as update_win_percentage but Opp Win percentage
     def update_opponent_win_percentage(self, day1_rounds, day2_rounds, current_round):
-        if ((self.drop_round == -1 or self.drop_round == current_round)
-                and (len(self.matches) > day1_rounds or current_round <= day1_rounds)):
-            val = 0
-            count = 0
-            counter = 0
-            for match in self.matches:
-                if match.player is not None and not (match.player.id == 0):
-                    win_percentage = match.player.win_percentage
-                    if win_percentage > 0:
-                        val = val + win_percentage
-                        count = count + 1
-                counter = counter + 1
-            if count > 0:
-                val = val / count
-            if val < 0.25:
-                val = 0.25
-            self.opp_win_percentage = val
+        if self.drop_round < current_round and self.drop_round != -1:
+            return
+
+        total = 0
+        count = 0
+
+        for match in self.matches:
+            if match.player is None or match.player.id == 0:
+                continue
+
+            total += match.player.win_percentage
+            count += 1
+
+        if count == 0:
+            self.opp_win_percentage = 0.25
+            return
+
+        self.opp_win_percentage = max(total / count, 0.25)
 
     # same as UpdateWinP but Opp Opp Win percentage
     def update_oppopp_win_percentage(self, day1_rounds, day2_rounds, current_round):
-        if (self.drop_round == -1 or self.drop_round == current_round) and (
-                (current_round > day1_rounds and len(self.matches) > day1_rounds) or (current_round <= day1_rounds)):
-            val = 0
-            count = 0
-            counter = 0
-            for match in self.matches:
-                if match.player is not None and not (match.player.id == 0):
-                    val = val + match.player.opp_win_percentage
-                    count = count + 1
-                counter = counter + 1
-            if count > 0:
-                val = val / count
-            if val < 0.25:
-                val = 0.25
-            self.oppopp_win_percentage = val
+        if self.drop_round < current_round and self.drop_round != -1:
+            return
+
+        total = 0
+        count = 0
+
+        for match in self.matches:
+            if match.player is None or match.player.id == 0:
+                continue
+
+            total += match.player.opp_win_percentage
+            count += 1
+
+        if count == 0:
+            self.oppopp_win_percentage = 0.25
+            return
+
+        result = total / count
+        self.oppopp_win_percentage = max(result, 0.25)
 
     # special logging/debug methods to output some data
     def __repr__(self):
