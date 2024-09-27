@@ -95,7 +95,7 @@ def main_worker(directory, output_dir, input_dir, season):
 
                         if len(result) > 0:
                             for [player_hash, candidate] in result:
-                                if matched_dictionary[player_hash] = True:
+                                if matched_dictionary[player_hash] == True:
                                     continue
 
                                 if player['result'] is None and (
@@ -121,8 +121,8 @@ def main_worker(directory, output_dir, input_dir, season):
                                     match = candidate
 
                                 if match:
-                                    matched_dictionary[player_hash] = Tru 
-                            result.append(players_dictionary[f"{player['name']}#{str(counter)}"])
+                                    matched_dictionary[player_hash] = True
+                                    result.append(players_dictionary[f"{player['name']}#{str(counter)}"])
                                     break
                     players.append((match, player['result'], player['dropped']))
 
