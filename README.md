@@ -13,8 +13,6 @@ This script accepts 4 parameters :
 
 - `--url` : mandatory, to specify the RK9 tournament id. Only the id is needed, the rest of the url is added by the script. NAIC 2023 would be NA1KYsUUz7fBID8XkZHZ
 - `--id` : mandatory, to specify the internal id of the tournament. Used by pokedata and pokestats.
-- `--decklists` : optional, false if not specified. Retrieves the decklists from the /roster/ page
-- `--roster`: optional, false if not specified. Retrieves the players' data from the /roster/ page (in case the countries are in the roster but not in the pairings)
 
 Some standings get broken by bad encoding during tournaments, just hope it will be fixed.
 DQs not being made public, the last parameter of the Standing() constructor is to manually add the names of DQed players.
