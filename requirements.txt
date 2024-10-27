@@ -1,0 +1,6 @@
+beautifulsoup4
+regex
+unicodedata2
+requests
+lxml
+requests_cache

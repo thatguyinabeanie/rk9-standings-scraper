@@ -1,0 +1,6 @@
+.venv
+http_cache.sqlite
+players.json
+published_standings.txt
+tables.json
+tournament.json
