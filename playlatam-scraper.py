@@ -8,7 +8,6 @@ import requests
 from bs4 import BeautifulSoup
 
 
-# TODO: how does playlatam deal with events over multiple days?
 def parse_playlatam_date_range(input_str):
     months = {
         'enero': '01',
@@ -24,9 +23,11 @@ def parse_playlatam_date_range(input_str):
         'noviembre': '11',
         'diciembre': '12'
     }
-    date_fields = input_str.lower().replace('–', ' ').replace('-', ' ').replace(', ', ' ').split(" ")
-    date = f'{date_fields[3]}-{months[date_fields[2]]}-{date_fields[0]}'
-    return date, date
+    date_fields = input_str.lower().split(" ")
+    days = date_fields[0].split("-")
+    start_date = f'{date_fields[3]}-{months[date_fields[2]]}-{days[0]}'
+    end_date = f'{date_fields[3]}-{months[date_fields[2]]}-{days[-1]}'
+    return start_date, end_date
 
 
 def table_scraper(tour_id, division_name, pod, rounds_no, published_standings):
@@ -78,7 +79,7 @@ def table_scraper(tour_id, division_name, pod, rounds_no, published_standings):
             except KeyError:
                 pass
 
-            record_match = re.match('\((\d+)/(\d+)/(\d+)\)', row_data[1].contents[-1])
+            record_match = re.match(r'\((\d+)/(\d+)/(\d+)\)', row_data[1].contents[-1])
             player_record = {
                 'wins': int(record_match.group(1)),
                 'losses': int(record_match.group(2)),
@@ -139,7 +140,7 @@ def main_worker(directory, link, output_dir):
     # yes we are sniffing through a script for the internal tour ID
     # i am going insane
     script = [tag for tag in soup.find('body').contents if tag.name == 'script'][0]
-    tour_id = re.search('refresh-rounds/(\d+)', script.string).group(1)
+    tour_id = re.search(r'refresh-rounds/(\d+)', script.string).group(1)
 
     for division in divisions:
         print(f"scrape start {division['name']} : {datetime.now().strftime('%Y/%m/%d - %H:%M:%S')}")

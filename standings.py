@@ -33,8 +33,12 @@ def single_elim_order(players):
 def main_worker(directory, output_dir, input_dir, season):
     with open(f"{input_dir}/{directory}/tournament.json", "r") as tournament_export:
         raw_tour = json.load(tournament_export)
-        tour_data = Event(raw_tour['id'], raw_tour['name'], raw_tour['date']['start'], raw_tour['date']['end'],
-                          raw_tour['rk9link'], int(season))
+        try:
+            tour_data = Event(raw_tour['id'], raw_tour['name'], raw_tour['date']['start'], raw_tour['date']['end'],
+                              'rk9', raw_tour['rk9link'], int(season))
+        except KeyError:
+            tour_data = Event(raw_tour['id'], raw_tour['name'], raw_tour['date']['start'], raw_tour['date']['end'],
+                              'playlatam', raw_tour['playlatamlink'], int(season))
 
     for division_name in tour_data.divisions:
         standing_directory = f'{output_dir}/{tour_data.event_id}/{division_name}'
@@ -122,7 +126,7 @@ def main_worker(directory, output_dir, input_dir, season):
 
                                 if match:
                                     matched_dictionary[player_hash] = True
-                                    result.append(players_dictionary[f"{player['name']}#{str(counter)}"])
+                                    result.append(players_dictionary[player_hash])
                                     break
                     players.append((match, player['result'], player['dropped']))
 
