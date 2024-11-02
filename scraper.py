@@ -41,7 +41,7 @@ def table_scraper(link, division_name, pod, rounds_no, published_standings, cach
     for iRounds in range(rounds_no):
         tables = []
         round_url = f"https://rk9.gg/pairings/{link}?pod={pod}&rnd={iRounds + 1}"
-        if iRounds >= rounds_no - 3:
+        if iRounds >= rounds_no - 2:
             print(f'Fetching: {round_url}')
             page = requests.get(round_url)
         else:
