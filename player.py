@@ -125,7 +125,7 @@ class Player:
             'T': 0
         }
         for match in self.matches[0:day2_rounds]:
-            if match.player.name == 'BYE':
+            if match.player.name == 'BYE' or match.status is None:
                 continue
             results[match.status] += 1
 
