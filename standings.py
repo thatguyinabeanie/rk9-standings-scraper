@@ -56,6 +56,13 @@ def main_worker(directory, output_dir, input_dir, season):
         except FileNotFoundError:
             continue
 
+        confirm = {}
+        try:
+            with open(f"{standing_directory_in}/confirm.json") as confirm_file:
+                confirm = json.load(confirm_file)
+        except FileNotFoundError:
+            pass
+
         try:
             with open(f"{standing_directory_in}/published_standings.txt") as pub_standings_file:
                 published_standings = [line.strip() for line in pub_standings_file.readlines()]
@@ -85,10 +92,12 @@ def main_worker(directory, output_dir, input_dir, season):
             still_playing = 0
             for table in tables:
                 players = []
-                for player in table['players']:
+                for (p, player) in enumerate(table['players']):
                     match = None
                     try:
-                        match = [candidate for candidate in tour_players if candidate.id == player['id']][0]
+                        candidate_key = f"{current_round}/{table['table']}"
+                        match = [candidate for candidate in tour_players if candidate.id == confirm[candidate_key][p]][0]
+                        print(candidate_key, p, confirm[candidate_key])
                     except KeyError:
                         result = []
                         counter = 0
