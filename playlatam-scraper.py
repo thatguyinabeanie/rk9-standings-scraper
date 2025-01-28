@@ -147,7 +147,7 @@ def main_worker(directory, link, output_dir):
         rounds_url = f"https://pairings.playlatam.net/refresh-rounds/{tour_id}/{division['pod']}"
         rounds_page = requests.get(rounds_url)
         rounds_soup = BeautifulSoup(rounds_page.content, "lxml")
-        rounds = max([tag['value'] for tag in rounds_soup.find_all('option')])
+        rounds = max([int(tag['value']) for tag in rounds_soup.find_all('option')])
         print(rounds)
 
         published_standings = []

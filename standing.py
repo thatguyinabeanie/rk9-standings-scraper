@@ -42,7 +42,7 @@ def get_round_count(players, tables):
     rounds_swiss = rounds_day1 + rounds_day2
     rounds_cut = 0
     if has_cut and len(tables) >= (rounds_swiss + 1):
-        rounds_cut = math.log2(len(tables[rounds_swiss]) * 2)
+        rounds_cut = math.ceil(math.log2(len(tables[rounds_swiss]) * 2))
 
     return (rounds_day1, rounds_day2, rounds_cut)
 
