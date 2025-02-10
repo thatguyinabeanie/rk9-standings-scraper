@@ -113,30 +113,39 @@ def main_worker(directory, output_dir, input_dir, season):
 
                                 if player['result'] is None and (
                                         candidate.wins == player['record']['wins'] and
-                                        candidate.losses == player['record']['losses'] and
+                                        candidate.losses <= player['record']['losses'] and
                                         candidate.ties == player['record']['ties']):
                                     match = candidate
                                     still_playing += 1
                                 elif player['result'] == 'L' and (
                                         candidate.wins == player['record']['wins'] and
-                                        candidate.losses + 1 == player['record']['losses'] and
+                                        candidate.losses + 1 <= player['record']['losses'] and
                                         candidate.ties == player['record']['ties']):
                                     match = candidate
                                 elif player['result'] == 'T' and (
                                         candidate.wins == player['record']['wins'] and
-                                        candidate.losses == player['record']['losses'] and
+                                        candidate.losses <= player['record']['losses'] and
                                         candidate.ties + 1 == player['record']['ties']):
                                     match = candidate
                                 elif player['result'] == 'W' and (
                                         candidate.wins + 1 == player['record']['wins'] and
-                                        candidate.losses == player['record']['losses'] and
+                                        candidate.losses <= player['record']['losses'] and
                                         candidate.ties == player['record']['ties']):
                                     match = candidate
 
                                 if match:
+                                    for i in range(current_round - match.wins - match.losses - match.ties - 1):
+                                        match.add_match(None, 'L', False, False, False, 0)
                                     matched_dictionary[player_hash] = True
                                     result.append(players_dictionary[player_hash])
                                     break
+                            else:
+                                new_player = Player(player['name'], division_name, len(tour_players) + 2, True, False)
+                                for i in range(current_round - 1):
+                                    new_player.add_match(None, 'L', False, False, False, 0)
+                                tour_players.add(new_player)
+                                match = new_player
+
                     players.append((match, player['result'], player['dropped']))
 
                 try:
