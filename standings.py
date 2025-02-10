@@ -175,7 +175,7 @@ def main_worker(directory, output_dir, input_dir, season):
 
             if current_round <= standing.rounds_day2:
                 tour_players.sort(key=lambda p: (
-                    not p.dqed, p.points, not p.late, round(p.opp_win_percentage * 100, 2),
+                    not p.dqed, p.points, round(p.opp_win_percentage * 100, 2),
                     round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                 placement = 1
                 for player in tour_players:
@@ -202,7 +202,7 @@ def main_worker(directory, output_dir, input_dir, season):
                                             tour_players[place].top_placement = temp_placement
                                             tour_players.sort(key=lambda p: (
                                                 len(tour_players) - p.top_placement - 1, p.points,
-                                                not p.late, round(p.opp_win_percentage * 100, 2),
+                                                round(p.opp_win_percentage * 100, 2),
                                                 round(p.oppopp_win_percentage * 100, 2)), reverse=True)
                                             place = place - 1
 
