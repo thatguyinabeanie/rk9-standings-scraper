@@ -139,16 +139,20 @@ def main_worker(directory, output_dir, input_dir, season):
                                     break
                     players.append((match, player['result'], player['dropped']))
 
-                if len(players) == 1 and players[0][0] is not None:
-                    players[0][0].add_match(None, players[0][1], players[0][2], current_round > standing.rounds_day1,
-                                            current_round > standing.rounds_day2, table['table'])
-                elif len(players) == 2:
-                    players[0][0].add_match(players[1][0], players[0][1], players[0][2],
-                                            current_round > standing.rounds_day1,
-                                            current_round > standing.rounds_day2, table['table'])
-                    players[1][0].add_match(players[0][0], players[1][1], players[1][2],
-                                            current_round > standing.rounds_day1,
-                                            current_round > standing.rounds_day2, table['table'])
+                try:
+                    if len(players) == 1 and players[0][0] is not None:
+                        players[0][0].add_match(None, players[0][1], players[0][2], current_round > standing.rounds_day1,
+                                                current_round > standing.rounds_day2, table['table'])
+                    elif len(players) == 2:
+                        players[0][0].add_match(players[1][0], players[0][1], players[0][2],
+                                                current_round > standing.rounds_day1,
+                                                current_round > standing.rounds_day2, table['table'])
+                        players[1][0].add_match(players[0][0], players[1][1], players[1][2],
+                                                current_round > standing.rounds_day1,
+                                                current_round > standing.rounds_day2, table['table'])
+                except AttributeError as e:
+                    print(players, table)
+                    raise e
 
                 # add match to top cut if relevant
                 if current_round >= standing.rounds_day2:
