@@ -111,7 +111,7 @@ def table_scraper(link, division_name, pod, rounds_no, published_standings, cach
 
             if len(table_players) > 0:
                 tables.append({
-                    'table': int(re.sub('[^0-9]', '', table),
+                    'table': int(re.sub('[^0-9]', '', table)),
                     'players': table_players
                 })
 
