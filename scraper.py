@@ -36,6 +36,7 @@ def parse_rk9_date_range(input_str):
 
 def table_scraper(link, division_name, pod, rounds_no, published_standings, cached_session):
     round_tables = []
+    late_players = []
     last_player_id = 1
     player_dict = {}
     for iRounds in range(rounds_no):
@@ -90,14 +91,19 @@ def table_scraper(link, division_name, pod, rounds_no, published_standings, cach
                             late = True
 
                 if iRounds == 0:
-                    last_player_id = last_player_id + 1
                     dqed = len(published_standings) > 0 and name not in published_standings
-                    player_dict[last_player_id] = {
+                    player_dict_entry = {
                         'name': name,
                         'division': division_name,
                         'late': late,
                         'dqed': dqed
                     }
+                    if not late:
+                        last_player_id = last_player_id + 1
+                        player_dict[last_player_id] = player_dict_entry
+                    else:
+                        late_players.append(player_dict_entry)
+
                 table_players.append({
                     'name': name,
                     'result': status,
@@ -119,6 +125,13 @@ def table_scraper(link, division_name, pod, rounds_no, published_standings, cach
                 table_players[0]['result'] = 'L'
 
         round_tables.append(tables)
+
+        if iRounds == 0:
+            for player in late_players:
+                print(player['name'])
+                last_player_id = last_player_id + 1
+                player_dict[last_player_id] = player
+
     return {
         'players': player_dict,
         'tables': round_tables
